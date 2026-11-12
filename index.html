@@ -188,6 +188,15 @@ body { margin: 0; background: #f4f1ea; }
             </div>
           </div>
         </div>
+        <p id="bnStatus" class="ad-hint" hidden></p>
+        <details id="cloudBox" style="margin:-4px 0 16px">
+          <summary>画像の自動アップロード設定（Cloudinary）</summary>
+          <div class="ad-row" style="margin-top:10px">
+            <label class="ad-field"><span>クラウド名</span><input id="fCloud" type="text" placeholder="例: dxxxxxxxx" autocomplete="off"></label>
+            <label class="ad-field"><span>アップロード用プリセット名</span><input id="fPreset" type="text" placeholder="例: cushion_banner" autocomplete="off"></label>
+          </div>
+          <p class="ad-hint">設定すると、画像を選んだだけで公開用URLが自動で入ります。未設定のときは、手動で置く案内が表示されます。</p>
+        </details>
         <div id="bnGuide" class="ad-alert ad-guide" hidden>
           <b>この画像は、まだ公開先に置かれていません。</b>QRから表示するには、次の2ステップが必要です。
           <ol>
@@ -500,12 +509,16 @@ document.addEventListener('DOMContentLoaded', function () {
     loc: '渋谷コミュニティスペース 3F',
     url: 'https://forms.gle/example',
     banner: '',
-    base: ''
+    base: '',
+    cloud: { cloud: 'a2esmadw', preset: 'cushion_banner' }
   };
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
   const init = Object.assign({}, defaults, saved);
   Object.keys(fields).forEach(k => fields[k].value = init[k] || '');
+  $('fCloud').value = (init.cloud && init.cloud.cloud) || defaults.cloud.cloud;
+  $('fPreset').value = (init.cloud && init.cloud.preset) || defaults.cloud.preset;
+  $('cloudBox').open = !($('fCloud').value && $('fPreset').value);
   const isHttp = /^https?:/.test(location.protocol);
   const selfUrl = location.origin + location.pathname;
   baseEl.value = init.base || (isHttp ? selfUrl : '');
@@ -533,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let qrSvg = '';
   function update() {
     const ev = getEv();
-    try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { base: baseEl.value.trim() }))); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { base: baseEl.value.trim(), cloud: { cloud: $('fCloud').value.trim(), preset: $('fPreset').value.trim() } }))); } catch (e) {}
     const local = upload && ev.banner === 'img/' + upload.name;
     const evView = Object.assign({}, ev, { _bannerSrc: local ? upload.url : '' });
     $('bnGuide').hidden = !local;
@@ -574,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     update();
   });
-  Object.values(fields).concat(baseEl).forEach(el => el.addEventListener('input', update));
+  Object.values(fields).concat(baseEl, $('fCloud'), $('fPreset')).forEach(el => el.addEventListener('input', update));
 
   // バナー画像：読み込み → 1000px幅のJPEGに縮小
   async function loadBitmap(file) {
@@ -582,6 +595,15 @@ document.addEventListener('DOMContentLoaded', function () {
     catch (e) {
       return await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
     }
+  }
+  function setStatus(msg, bad) { const el = $('bnStatus'); el.hidden = !msg; el.textContent = msg || ''; el.style.color = bad ? 'var(--red)' : ''; }
+  async function uploadToCloud(blob, cloud, preset) {
+    const fd = new FormData();
+    fd.append('file', blob, 'banner.jpg'); fd.append('upload_preset', preset);
+    const r = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(cloud)}/image/upload`, { method: 'POST', body: fd });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.secure_url) throw new Error((j.error && j.error.message) || '通信エラー');
+    return j.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_1000/');
   }
   $('bnPick').addEventListener('click', () => $('bnFile').click());
   $('bnFile').addEventListener('change', async e => {
@@ -598,9 +620,20 @@ document.addEventListener('DOMContentLoaded', function () {
       upload = { name, blob, url: URL.createObjectURL(blob) };
       fields.banner.value = 'img/' + name;
       update();
-    } catch (err) { toast('この画像は読み込めませんでした'); }
+    } catch (err) { toast('この画像は読み込めませんでした'); return; }
+    const cn = $('fCloud').value.trim(), pr = $('fPreset').value.trim();
+    if (!cn || !pr) return;
+    const mine = upload;
+    setStatus('アップロード中…');
+    try {
+      const url = await uploadToCloud(mine.blob, cn, pr);
+      if (upload === mine) { URL.revokeObjectURL(mine.url); upload = null; fields.banner.value = url; update(); }
+      setStatus('アップロードしました。QRのURLに反映済みです。');
+    } catch (err) {
+      setStatus('自動アップロードに失敗しました（' + err.message + '）。下の手順で手動で置くこともできます。', true);
+    }
   });
-  $('bnClear').addEventListener('click', () => { upload = null; fields.banner.value = ''; update(); });
+  $('bnClear').addEventListener('click', () => { upload = null; setStatus(''); fields.banner.value = ''; update(); });
   $('bnSave').addEventListener('click', () => {
     if (!upload) return;
     const a = document.createElement('a'); a.href = upload.url; a.download = upload.name; a.click();
