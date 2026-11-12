@@ -3,115 +3,220 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>カレンダー仮押さえ クッションページ</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<meta name="theme-color" content="#f4f1ea">
+<meta name="color-scheme" content="light">
+<meta name="description" content="イベントの日程を、申込フォームなしでカレンダーに仮押さえできるページです。">
+<title>Save the Date ページメーカー</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='24' rx='3' fill='%23fffdf8' stroke='%231c1b19' stroke-width='2'/%3E%3Crect x='3' y='5' width='26' height='8' rx='3' fill='%23c8402f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+
+<!-- クッションページの見た目（書き出しHTMLにもそのまま入る） -->
 <style id="shared-css">
-  html, body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; }
-  .cushion-bg { background: radial-gradient(120% 80% at 10% 0%, #6d5dfc 0%, transparent 55%), radial-gradient(100% 70% at 100% 100%, #ff7eb3 0%, transparent 55%), #1b1740; color: #fff; }
-  .glass { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-  .btn-press { transition: transform .12s ease, box-shadow .12s ease; }
-  .btn-press:active { transform: scale(.97); }
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #f4f1ea; }
+.cs {
+  --paper: #f4f1ea; --card: #fffdf8; --ink: #1c1b19; --sub: #6b665d; --line: #d6d0c2;
+  --red: #c8402f; --blue: #2b4c7e;
+  --mincho: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --gothic: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: var(--paper); color: var(--ink); min-height: 100%;
+  font-family: var(--gothic); font-size: 15px; line-height: 1.7;
+  -webkit-font-smoothing: antialiased; font-feature-settings: "palt";
+}
+.cs-standalone .cs { min-height: 100vh; min-height: 100dvh; }
+.cs-wrap { max-width: 440px; margin: 0 auto; padding: 30px 24px calc(34px + env(safe-area-inset-bottom)); }
+.cs a { color: inherit; }
+
+.cs-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 11px; font-weight: 700; letter-spacing: .34em; color: var(--sub); }
+.cs-eyebrow::before, .cs-eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* 日めくりカレンダー */
+.cs-leaf { position: relative; margin: 22px 6px 0; }
+.cs-leaf::before, .cs-leaf::after { content: ""; position: absolute; left: 5px; right: 5px; height: 100%; top: 5px; background: var(--card); border: 1px solid var(--ink); border-radius: 5px; }
+.cs-leaf::after { left: 10px; right: 10px; top: 10px; z-index: 0; }
+.cs-leaf::before { z-index: 1; }
+.cs-leaf-body { position: relative; z-index: 2; background: var(--card); border: 1px solid var(--ink); border-radius: 5px; overflow: hidden; }
+.cs-leaf-head { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 18px 10px; background: var(--red); color: #fff; font-family: var(--mincho); font-weight: 700; letter-spacing: .12em; }
+.cs-leaf-head span:first-child { font-size: 17px; }
+.cs-leaf-head span:last-child { font-size: 11px; letter-spacing: .3em; opacity: .9; }
+.cs-day { font-family: var(--mincho); font-weight: 800; font-size: 132px; line-height: 1; text-align: center; padding: 20px 0 2px; letter-spacing: -.02em; font-feature-settings: "lnum"; }
+.cs-day.sun { color: var(--red); } .cs-day.sat { color: var(--blue); }
+.cs-week { text-align: center; font-family: var(--mincho); font-weight: 700; font-size: 16px; letter-spacing: .4em; text-indent: .4em; padding-bottom: 18px; }
+.cs-week small { display: block; font-family: var(--gothic); font-size: 10px; letter-spacing: .34em; text-indent: .34em; color: var(--sub); font-weight: 500; margin-top: 2px; }
+.cs-time { border-top: 1px dashed var(--ink); padding: 13px 12px; text-align: center; font-size: 17px; font-weight: 700; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.cs-seal { position: absolute; z-index: 3; right: -10px; top: 58px; width: 74px; height: 74px; border: 2.5px solid var(--red); border-radius: 50%; color: var(--red); display: grid; place-items: center; transform: rotate(-13deg); font-family: var(--mincho); font-weight: 800; font-size: 17px; line-height: 1.15; text-align: center; letter-spacing: .06em; background: rgba(255,253,248,.72); box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 4px var(--red); }
+
+.cs-title { font-family: var(--mincho); font-weight: 700; font-size: 25px; line-height: 1.55; margin: 38px 0 0; overflow-wrap: anywhere; word-break: auto-phrase; text-wrap: balance; }
+.cs-place { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; color: var(--sub); font-size: 14px; overflow-wrap: anywhere; }
+.cs-place svg { flex: none; margin-top: 4px; }
+
+.cs-lead { margin: 30px 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em; display: flex; align-items: center; gap: 10px; }
+.cs-lead::after { content: ""; flex: 1; height: 1px; background: var(--ink); }
+.cs-btns { display: grid; gap: 10px; }
+.cs-btn { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 68px; padding: 12px 16px 12px 18px; border-radius: 10px; border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s ease, background .15s ease; }
+.cs-btn:active { transform: translateY(1px) scale(.99); }
+.cs-btn.primary { background: var(--ink); color: var(--card); }
+.cs-btn svg { flex: none; }
+.cs-btn-text { flex: 1; min-width: 0; }
+.cs-btn-text b { display: block; font-size: 16px; line-height: 1.4; }
+.cs-btn-text small { display: block; font-size: 11.5px; line-height: 1.5; opacity: .72; margin-top: 1px; }
+.cs-flash { margin: 10px 0 0; padding: 10px 14px; background: var(--ink); color: var(--card); border-radius: 8px; font-size: 13px; }
+.cs-flash[hidden] { display: none; }
+
+.cs-note { margin-top: 30px; padding: 14px 16px; border-left: 3px solid var(--red); background: rgba(200,64,47,.06); font-size: 13px; }
+.cs-note b { display: block; font-size: 14px; }
+.cs-note a { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-weight: 700; color: var(--red); text-underline-offset: 4px; }
+.cs-foot { margin-top: 26px; font-size: 11.5px; color: var(--sub); line-height: 1.8; }
+.cs-empty { min-height: inherit; display: grid; place-items: center; text-align: center; padding: 80px 24px; }
+.cs-empty h1 { font-family: var(--mincho); font-size: 20px; margin: 0 0 8px; }
+.cs-empty p { margin: 0; color: var(--sub); font-size: 13px; }
+</style>
+
+<!-- 管理画面の見た目 -->
+<style>
+.ad { --paper: #f4f1ea; --card: #fffdf8; --ink: #1c1b19; --sub: #6b665d; --line: #d6d0c2; --red: #c8402f;
+  --mincho: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif; color: var(--ink); font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+.ad-head { border-bottom: 1px solid var(--ink); }
+.ad-head-in, .ad-main { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+.ad-head-in { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-top: 22px; padding-bottom: 18px; flex-wrap: wrap; }
+.ad-logo { font-family: var(--mincho); font-weight: 800; font-size: 22px; letter-spacing: .04em; margin: 0; }
+.ad-logo i { font-style: normal; color: var(--red); }
+.ad-tag { margin: 0; font-size: 13px; color: var(--sub); }
+.ad-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 56px; padding-top: 36px; padding-bottom: 72px; }
+.ad-step { padding: 0 0 34px; margin-bottom: 34px; border-bottom: 1px solid var(--line); }
+.ad-step:last-child { border-bottom: 0; margin-bottom: 0; }
+.ad-step-h { display: flex; align-items: baseline; gap: 14px; margin: 0 0 6px; }
+.ad-step-h span { font-family: var(--mincho); font-weight: 800; font-size: 28px; color: var(--red); line-height: 1; }
+.ad-step-h h2 { font-family: var(--mincho); font-size: 20px; font-weight: 700; margin: 0; }
+.ad-step > p { margin: 0 0 18px; color: var(--sub); font-size: 13.5px; }
+.ad-field { display: block; margin-bottom: 16px; }
+.ad-field > span { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 6px; letter-spacing: .04em; }
+.ad-field em { font-style: normal; font-weight: 500; color: var(--sub); margin-left: 6px; }
+.ad input, .ad textarea { width: 100%; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.ad input:focus, .ad textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(28,27,25,.1); }
+.ad input::placeholder { color: #b3ad9f; }
+.ad-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ad-hint { font-size: 12px; color: var(--sub); margin: -6px 0 0; }
+.ad-alert { font-size: 13px; padding: 10px 14px; border-left: 3px solid var(--red); background: rgba(200,64,47,.07); margin: 0 0 16px; }
+.ad-alert[hidden] { display: none; }
+.ad-share { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 20px; align-items: start; }
+.ad-qr { width: 168px; aspect-ratio: 1; background: #fff; border: 1px solid var(--ink); border-radius: 6px; padding: 10px; display: grid; place-items: center; font-size: 12px; color: var(--red); text-align: center; }
+.ad-qr svg { width: 100%; height: 100%; display: block; }
+.ad textarea { font-size: 12px; line-height: 1.6; font-family: ui-monospace, "SF Mono", Menlo, monospace; resize: vertical; word-break: break-all; color: var(--sub); }
+.ad-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ad-btn { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13.5px; font-weight: 700; padding: 9px 16px; border-radius: 8px; border: 1.5px solid var(--ink); background: var(--ink); color: var(--card); cursor: pointer; text-decoration: none; transition: transform .12s; }
+.ad-btn:active { transform: translateY(1px); }
+.ad-btn.ghost { background: transparent; color: var(--ink); }
+.ad details { margin-top: 16px; font-size: 13px; color: var(--sub); }
+.ad summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+.ad table { border-collapse: collapse; margin-top: 10px; }
+.ad td { padding: 4px 16px 4px 0; vertical-align: top; }
+.ad code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; background: rgba(28,27,25,.07); padding: 1px 6px; border-radius: 4px; color: var(--ink); }
+.ad-preview { position: sticky; top: 24px; align-self: start; }
+.ad-preview-cap { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--sub); margin: 0 4px 12px; }
+.ad-preview-cap b { font-size: 11px; letter-spacing: .3em; color: var(--ink); }
+.ad-phone { background: var(--ink); border-radius: 48px; padding: 11px; box-shadow: 0 30px 60px -28px rgba(28,27,25,.55), 0 2px 0 rgba(255,255,255,.5) inset; }
+.ad-phone-in { position: relative; border-radius: 38px; overflow: hidden; background: var(--paper); }
+.ad-phone-in::before { content: ""; position: absolute; top: 9px; left: 50%; width: 92px; height: 24px; margin-left: -46px; border-radius: 99px; background: var(--ink); z-index: 5; }
+.ad-screen { height: min(740px, calc(100vh - 110px)); overflow-y: auto; padding-top: 30px; background: var(--paper); scrollbar-width: none; }
+.ad-screen::-webkit-scrollbar { display: none; }
+.ad-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--ink); color: var(--card); font-size: 13px; font-weight: 700; padding: 10px 20px; border-radius: 99px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+@media (max-width: 900px) {
+  .ad-main { grid-template-columns: minmax(0, 1fr); gap: 40px; padding-top: 28px; }
+  .ad-preview { position: static; max-width: 400px; width: 100%; margin: 0 auto; }
+}
+@media (max-width: 520px) {
+  .ad-head-in, .ad-main { padding-left: 18px; padding-right: 18px; }
+  .ad-row, .ad-share { grid-template-columns: minmax(0, 1fr); }
+  .ad-qr { margin: 0 auto; }
+}
 </style>
 </head>
-<body class="bg-slate-100 text-slate-800">
+<body>
 
-<div id="cushionRoot" class="hidden"></div>
+<div id="cushionRoot" hidden></div>
 
-<div id="admin" class="min-h-screen">
-  <header class="px-5 py-5 border-b border-slate-200 bg-white">
-    <div class="max-w-6xl mx-auto">
-      <h1 class="text-xl font-bold">📅 仮押さえクッションページ ジェネレーター</h1>
-      <p class="text-sm text-slate-500 mt-1">QRを読み取った人が、申込フォームなしで3秒で「Save the Date」できるページを作ります。</p>
+<div id="admin" class="ad">
+  <header class="ad-head">
+    <div class="ad-head-in">
+      <h1 class="ad-logo">Save the Date<i>.</i> ページメーカー</h1>
+      <p class="ad-tag">申込フォームの前に、まずカレンダーへ。3秒で仮押さえできるページとQRコードを作ります。</p>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto p-4 lg:p-6 grid lg:grid-cols-2 gap-6">
-    <!-- 入力・書き出し -->
-    <section class="space-y-5 order-1">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
-        <h2 class="font-bold">① イベント情報</h2>
-        <label class="block">
-          <span class="text-sm font-medium">イベント名</span>
-          <input id="fTitle" type="text" class="mt-1 w-full rounded-lg border-slate-300 border px-3 py-2" placeholder="冬のゆるっと作戦会議＆交流会">
-        </label>
-        <div class="grid sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="text-sm font-medium">開始日時</span>
-            <input id="fStart" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-          </label>
-          <label class="block">
-            <span class="text-sm font-medium">終了日時</span>
-            <input id="fEnd" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-          </label>
+  <main class="ad-main">
+    <div>
+      <section class="ad-step">
+        <div class="ad-step-h"><span>01</span><h2>イベント情報</h2></div>
+        <p>入力した内容は、右のプレビューにすぐ反映されます。</p>
+        <label class="ad-field"><span>イベント名</span>
+          <input id="fTitle" type="text" placeholder="冬のゆるっと作戦会議＆交流会" autocomplete="off"></label>
+        <div class="ad-row">
+          <label class="ad-field"><span>開始日時</span><input id="fStart" type="datetime-local"></label>
+          <label class="ad-field"><span>終了日時</span><input id="fEnd" type="datetime-local"></label>
         </div>
-        <p id="dateWarn" class="hidden text-sm text-red-600">終了日時が開始日時より前になっています。</p>
-        <label class="block">
-          <span class="text-sm font-medium">開催場所</span>
-          <input id="fLoc" type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="渋谷コミュニティスペース（東京都渋谷区…）">
-        </label>
-        <label class="block">
-          <span class="text-sm font-medium">本申し込み用フォームのURL</span>
-          <input id="fUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="https://forms.gle/xxxxxxxx">
-        </label>
-        <p class="text-xs text-slate-500">時刻は日本時間（Asia/Tokyo）として扱います。</p>
-      </div>
+        <p id="dateWarn" class="ad-alert" hidden>終了日時が開始日時より前になっています。</p>
+        <label class="ad-field"><span>開催場所</span>
+          <input id="fLoc" type="text" placeholder="渋谷コミュニティスペース 3F" autocomplete="off"></label>
+        <label class="ad-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
+          <input id="fUrl" type="url" placeholder="https://forms.gle/…" autocomplete="off"></label>
+        <p class="ad-hint">時刻は日本時間として登録されます。</p>
+      </section>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
-        <h2 class="font-bold">② 配布用URL・QRコード</h2>
-        <label class="block">
-          <span class="text-sm font-medium">クッションページの公開先URL</span>
-          <input id="fBase" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="https://example.github.io/cushion/">
-          <span class="text-xs text-slate-500">④で書き出したHTMLを置いたURLを入れると、QRがそのページを指します。</span>
-        </label>
-        <p id="baseWarn" class="hidden text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          いま開いているのはパソコン内のファイルです。スマホで読み取るには、公開先URLを入力してください。
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 items-center">
-          <div id="qrBox" class="w-44 h-44 bg-white border border-slate-200 rounded-xl p-2 shrink-0"></div>
-          <div class="w-full min-w-0 space-y-2">
-            <textarea id="linkOut" readonly rows="4" class="w-full text-xs rounded-lg border border-slate-300 bg-slate-50 p-2 break-all"></textarea>
-            <div class="flex flex-wrap gap-2">
-              <button id="btnCopyLink" class="btn-press px-3 py-2 rounded-lg bg-slate-800 text-white text-sm">URLをコピー</button>
-              <a id="btnOpenLink" target="_blank" rel="noopener" class="btn-press px-3 py-2 rounded-lg border border-slate-300 text-sm">別タブで開く</a>
-              <button id="btnQrPng" class="btn-press px-3 py-2 rounded-lg border border-slate-300 text-sm">QRをPNG保存</button>
+      <section class="ad-step">
+        <div class="ad-step-h"><span>02</span><h2>URLとQRコード</h2></div>
+        <p>このQRコードをチラシやSNSに載せてください。読み取るとプレビューと同じページが開きます。</p>
+        <p id="baseWarn" class="ad-alert" hidden>いま開いているのはパソコン内のファイルです。スマホで読み取れるQRにするには、下の「公開先URL」を入力してください。</p>
+        <div class="ad-share">
+          <div id="qrBox" class="ad-qr"></div>
+          <div>
+            <textarea id="linkOut" readonly rows="4" aria-label="配布用URL"></textarea>
+            <div class="ad-actions">
+              <button id="btnCopyLink" class="ad-btn" type="button">URLをコピー</button>
+              <button id="btnQrPng" class="ad-btn ghost" type="button">QRを画像で保存</button>
+              <a id="btnOpenLink" class="ad-btn ghost" target="_blank" rel="noopener">開いて確認</a>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-3">
-        <h2 class="font-bold">③ 万能クッションページHTMLの書き出し</h2>
-        <p class="text-sm text-slate-600">GitHub Pages や Cloudflare Pages に1度アップすれば、URLのパラメータを変えるだけで、どんなイベントにも使い回せる単一HTMLです。</p>
-        <div class="flex flex-wrap gap-2">
-          <button id="btnCopyHtml" class="btn-press px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium">HTMLをコピー</button>
-          <button id="btnDlHtml" class="btn-press px-4 py-2 rounded-lg border border-indigo-600 text-indigo-700 text-sm font-medium">index.html をダウンロード</button>
-        </div>
-        <details class="text-sm text-slate-600">
-          <summary class="cursor-pointer">URLパラメータの仕様</summary>
-          <ul class="mt-2 space-y-1 list-disc pl-5">
-            <li><code>t</code> イベント名</li>
-            <li><code>s</code> 開始日時（例 <code>2026-12-20T14:00</code>）</li>
-            <li><code>e</code> 終了日時</li>
-            <li><code>l</code> 開催場所</li>
-            <li><code>u</code> 本申し込みURL</li>
-          </ul>
+        <details>
+          <summary>公開先URLを変更する</summary>
+          <label class="ad-field" style="margin-top:12px"><span>クッションページの公開先URL</span>
+            <input id="fBase" type="url" placeholder="https://example.github.io/cushion/" autocomplete="off"></label>
+          <p class="ad-hint">別の場所に置いたクッションページを使うときだけ変更します。</p>
         </details>
-      </div>
-    </section>
+      </section>
 
-    <!-- スマホシミュレーター -->
-    <section class="order-2 lg:sticky lg:top-6 self-start">
-      <h2 class="font-bold mb-3 text-center">📱 ライブプレビュー（ボタンも実際に動きます）</h2>
-      <div class="mx-auto rounded-[44px] bg-neutral-900 p-[10px] shadow-2xl" style="width:min(395px,100%)">
-        <div class="relative rounded-[34px] overflow-hidden bg-black">
-          <div class="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-10"></div>
-          <div id="phoneScreen" class="overflow-y-auto" style="height:min(720px,80vh)"></div>
+      <section class="ad-step">
+        <div class="ad-step-h"><span>03</span><h2>ページ本体の書き出し</h2></div>
+        <p>自分のサイトに置きたい場合に。1ファイルを公開すれば、URLのパラメータを変えるだけでどのイベントにも使い回せます。</p>
+        <div class="ad-actions" style="margin-top:0">
+          <button id="btnDlHtml" class="ad-btn" type="button">index.html をダウンロード</button>
+          <button id="btnCopyHtml" class="ad-btn ghost" type="button">HTMLをコピー</button>
         </div>
-      </div>
-    </section>
+        <details>
+          <summary>URLパラメータの仕様</summary>
+          <table>
+            <tr><td><code>t</code></td><td>イベント名</td></tr>
+            <tr><td><code>s</code></td><td>開始日時（例 <code>2026-12-20T14:00</code>）</td></tr>
+            <tr><td><code>e</code></td><td>終了日時</td></tr>
+            <tr><td><code>l</code></td><td>開催場所</td></tr>
+            <tr><td><code>u</code></td><td>本申し込みフォームのURL</td></tr>
+          </table>
+        </details>
+      </section>
+    </div>
+
+    <aside class="ad-preview">
+      <div class="ad-preview-cap"><b>PREVIEW</b><span>ボタンは実際に動作します</span></div>
+      <div class="ad-phone"><div class="ad-phone-in"><div id="phoneScreen" class="ad-screen"></div></div></div>
+    </aside>
   </main>
-  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-sm px-4 py-2 rounded-full opacity-0 pointer-events-none transition-opacity"></div>
+  <div id="toast" class="ad-toast" role="status"></div>
 </div>
 
 <!-- ===== 共有コア：画面表示・Google URL・ICS生成（書き出しHTMLにもそのまま入る） ===== -->
@@ -119,6 +224,9 @@
 const TZ = 'Asia/Tokyo';
 const TZ_OFFSET = 9;
 const pad = n => String(n).padStart(2, '0');
+const WEEK_JA = '日月火水木金土';
+const WEEK_EN = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+const MONTH_EN = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -129,6 +237,7 @@ function parseLocal(v) {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || '');
   return m ? m.slice(1).map(Number) : null;
 }
+function weekday(p) { return new Date(p[0], p[1] - 1, p[2]).getDay(); }
 function compact(v) {
   const p = parseLocal(v);
   return p ? `${p[0]}${pad(p[1])}${pad(p[2])}T${pad(p[3])}${pad(p[4])}00` : '';
@@ -142,11 +251,12 @@ function alarmUtc(startVal, daysBefore) {
   const p = parseLocal(startVal);
   return utcStamp(Date.UTC(p[0], p[1] - 1, p[2] - daysBefore, 12 - TZ_OFFSET, 0, 0));
 }
-function formatJa(v) {
-  const p = parseLocal(v);
-  if (!p) return '';
-  const w = '日月火水木金土'[new Date(p[0], p[1] - 1, p[2]).getDay()];
-  return `${p[0]}年${p[1]}月${p[2]}日(${w}) ${pad(p[3])}:${pad(p[4])}`;
+function timeRange(ev) {
+  const s = parseLocal(ev.start), e = parseLocal(ev.end);
+  const hm = p => `${p[3]}:${pad(p[4])}`;
+  if (!e) return `${hm(s)} 開始`;
+  if (s[0] === e[0] && s[1] === e[1] && s[2] === e[2]) return `${hm(s)} – ${hm(e)}`;
+  return `${hm(s)} – ${e[1]}/${e[2]}(${WEEK_JA[weekday(e)]}) ${hm(e)}`;
 }
 
 function calTitle(ev) { return `【仮押さえ・未申込】${ev.title}`; }
@@ -174,12 +284,12 @@ function icsEscape(s) {
 }
 // 75バイトで折り返し（RFC 5545）
 function icsFold(line) {
-  const enc = new TextEncoder(), dec = new TextDecoder();
+  const enc = new TextEncoder();
   const out = [];
-  let cur = '', bytes = 0, limit = 75;
+  let cur = '', bytes = 0;
   for (const ch of line) {
     const b = enc.encode(ch).length;
-    if (bytes + b > limit) { out.push(cur); cur = ' '; bytes = 1; limit = 75; }
+    if (bytes + b > 75) { out.push(cur); cur = ' '; bytes = 1; }
     cur += ch; bytes += b;
   }
   out.push(cur);
@@ -232,8 +342,7 @@ function buildIcs(ev) {
 }
 
 function downloadIcs(ev) {
-  const ics = buildIcs(ev);
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const blob = new Blob([buildIcs(ev)], { type: 'text/calendar;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'save-the-date.ics';
@@ -256,66 +365,81 @@ function paramsFromEv(ev) {
   return q.toString();
 }
 function isValidEv(ev) { return !!(ev.title && parseLocal(ev.start)); }
+function isAppleDevice() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+}
+function safeHttpUrl(u) { return /^https?:\/\//i.test(u) ? u : ''; }
+
+const ICON = {
+  cal: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M12 12.5v5M9.5 15h5"/></svg>',
+  bell: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.5 15l2.5 2.5 4.5-5"/></svg>',
+  chev: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  pin: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>',
+  arrow: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+};
 
 function renderCushion(root, ev) {
   if (!isValidEv(ev)) {
-    root.innerHTML = `<div class="cushion-bg min-h-full flex items-center justify-center p-8 text-center">
-      <div><div class="text-5xl mb-4">🗓️</div><p class="font-bold">イベント情報がありません</p>
-      <p class="text-sm opacity-80 mt-2">URLに ?t=イベント名&amp;s=開始日時 が必要です。</p></div></div>`;
+    root.innerHTML = `<div class="cs"><div class="cs-empty"><div>
+      <h1>イベント情報がありません</h1><p>イベント名と開始日時を指定してください。</p></div></div></div>`;
     return;
   }
-  const hasEnd = !!parseLocal(ev.end);
+  const s = parseLocal(ev.start), w = weekday(s);
+  const formUrl = safeHttpUrl(ev.url);
+  const google = `<a class="cs-btn" data-act="google" href="${esc(googleUrl(ev))}" target="_blank" rel="noopener">
+      ${ICON.cal}<span class="cs-btn-text"><b>Googleカレンダーに追加</b><small>Android・Googleカレンダーをお使いの方</small></span>${ICON.chev}</a>`;
+  const apple = `<button class="cs-btn" data-act="ics" type="button">
+      ${ICON.bell}<span class="cs-btn-text"><b>iPhoneのカレンダーに追加</b><small>Mac・Outlookも対応／3日前と前日の正午に通知</small></span>${ICON.chev}</button>`;
+  const btns = (isAppleDevice() ? [apple, google] : [google, apple]);
+  btns[0] = btns[0].replace('class="cs-btn"', 'class="cs-btn primary"');
+
   root.innerHTML = `
-  <div class="cushion-bg min-h-full px-5 py-8 flex flex-col">
-    <div class="max-w-md w-full mx-auto flex-1 flex flex-col">
-      <div class="text-center">
-        <span class="inline-block glass rounded-full px-4 py-1 text-xs tracking-[.25em] font-semibold">SAVE THE DATE</span>
-        <h1 class="mt-5 text-2xl font-extrabold leading-snug break-words">${esc(ev.title)}</h1>
-      </div>
+  <div class="cs"><div class="cs-wrap">
+    <div class="cs-eyebrow">SAVE THE DATE</div>
 
-      <div class="glass rounded-2xl p-4 mt-6 space-y-3 text-sm">
-        <div class="flex gap-3"><span class="text-lg">🗓️</span>
-          <div><div class="font-semibold">${esc(formatJa(ev.start))}</div>
-          ${hasEnd ? `<div class="opacity-80">〜 ${esc(formatJa(ev.end))}</div>` : ''}</div></div>
-        ${ev.loc ? `<div class="flex gap-3"><span class="text-lg">📍</span><div class="font-semibold break-words">${esc(ev.loc)}</div></div>` : ''}
+    <div class="cs-leaf">
+      <div class="cs-leaf-body">
+        <div class="cs-leaf-head"><span>${s[0]}年 ${s[1]}月</span><span>${MONTH_EN[s[1] - 1]}</span></div>
+        <div class="cs-day${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">${s[2]}</div>
+        <div class="cs-week">${WEEK_JA[w]}曜日<small>${WEEK_EN[w]}</small></div>
+        <div class="cs-time">${esc(timeRange(ev))}</div>
       </div>
-
-      <p class="text-center mt-7 mb-3 text-sm opacity-90">まずはカレンダーに<b>仮押さえ</b>しておきましょう<br><span class="text-xs opacity-75">（申込フォームの入力は不要・3秒で完了）</span></p>
-
-      <div class="space-y-3">
-        <a data-act="google" href="${esc(googleUrl(ev))}" target="_blank" rel="noopener"
-           class="btn-press flex items-center justify-center gap-3 w-full rounded-2xl bg-white text-slate-800 font-bold py-4 text-base shadow-lg">
-          <span class="text-xl">📆</span> Googleカレンダーに追加
-        </a>
-        <button data-act="ics" type="button"
-           class="btn-press flex items-center justify-center gap-3 w-full rounded-2xl bg-slate-900/80 border border-white/30 text-white font-bold py-4 text-base shadow-lg">
-          <span class="text-xl"></span> iPhone / 標準カレンダーに追加
-        </button>
-      </div>
-      <p class="text-[11px] text-center opacity-70 mt-3 leading-relaxed">iPhone・標準カレンダーでは、3日前と1日前の12:00にお知らせが届きます。<br>うまく開かない場合は Safari / Chrome で開いてください。</p>
-
-      <div class="mt-auto pt-8 text-center">
-        <p class="text-xs opacity-80 mb-2">※現在は<b>未申込</b>です。参加できそうな方は本申し込みもお願いします。</p>
-        ${ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener" class="btn-press inline-block rounded-full glass px-5 py-2 text-sm font-semibold">本申し込みはこちら →</a>` : ''}
-      </div>
+      <div class="cs-seal" aria-hidden="true"><span>仮押<br>さえ</span></div>
     </div>
-  </div>`;
-  root.querySelector('[data-act="ics"]').addEventListener('click', () => downloadIcs(ev));
+
+    <h1 class="cs-title">${esc(ev.title)}</h1>
+    ${ev.loc ? `<div class="cs-place">${ICON.pin}<span>${esc(ev.loc)}</span></div>` : ''}
+
+    <div class="cs-lead">まずは、予定だけ押さえる</div>
+    <div class="cs-btns">${btns.join('')}</div>
+    <p class="cs-flash" data-flash hidden>ファイルを開き、「追加」を押すと登録されます。</p>
+
+    <div class="cs-note">
+      <b>お申し込みは、まだ完了していません。</b>
+      参加できそうな方は、あとから本申し込みをお願いします。
+      ${formUrl ? `<br><a href="${esc(formUrl)}" target="_blank" rel="noopener">本申し込みフォームへ ${ICON.arrow}</a>` : ''}
+    </div>
+    <p class="cs-foot">都合が悪くなった場合は、カレンダーの予定を削除するだけで大丈夫です。うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
+  </div></div>`;
+  root.querySelector('[data-act="ics"]').addEventListener('click', () => {
+    downloadIcs(ev);
+    root.querySelector('[data-flash]').hidden = false;
+  });
 }
 
 // 単体のクッションページとして動かすとき
 function bootstrapCushion(rootEl) {
   const ev = evFromParams(location.search);
-  if (ev.title) document.title = ev.title + '｜仮押さえ';
-  rootEl.classList.remove('hidden');
-  rootEl.style.minHeight = '100vh';
+  if (ev.title) document.title = ev.title + '｜Save the Date';
+  rootEl.hidden = false;
+  rootEl.classList.add('cs-standalone');
   renderCushion(rootEl, ev);
 }
 </script>
 
 <!-- ===== 管理・プレビュー側 ===== -->
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   const params = new URLSearchParams(location.search);
   if (params.has('t') && params.has('s')) {
     document.getElementById('admin').remove();
@@ -331,7 +455,7 @@ function bootstrapCushion(rootEl) {
   const defaults = {
     title: '冬のゆるっと作戦会議＆交流会',
     start: '2026-12-20T14:00', end: '2026-12-20T16:00',
-    loc: '渋谷コミュニティスペース',
+    loc: '渋谷コミュニティスペース 3F',
     url: 'https://forms.gle/example',
     base: ''
   };
@@ -340,10 +464,11 @@ function bootstrapCushion(rootEl) {
   const init = Object.assign({}, defaults, saved);
   Object.keys(fields).forEach(k => fields[k].value = init[k] || '');
   const isHttp = /^https?:/.test(location.protocol);
-  baseEl.value = init.base || (isHttp ? location.origin + location.pathname : '');
+  const selfUrl = location.origin + location.pathname;
+  baseEl.value = init.base || (isHttp ? selfUrl : '');
 
   const getEv = () => ({ title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim() });
-  const getBase = () => baseEl.value.trim() || (isHttp ? location.origin + location.pathname : 'index.html');
+  const getBase = () => baseEl.value.trim() || (isHttp ? selfUrl : 'index.html');
 
   function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.style.opacity = 1;
@@ -363,8 +488,8 @@ function bootstrapCushion(rootEl) {
     const ev = getEv();
     try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { base: baseEl.value.trim() }))); } catch (e) {}
 
-    $('dateWarn').classList.toggle('hidden', !(ev.start && ev.end && ev.end < ev.start));
-    $('baseWarn').classList.toggle('hidden', !!baseEl.value.trim() || isHttp);
+    $('dateWarn').hidden = !(ev.start && ev.end && ev.end < ev.start);
+    $('baseWarn').hidden = !!baseEl.value.trim() || isHttp;
 
     renderCushion($('phoneScreen'), ev);
 
@@ -374,13 +499,11 @@ function bootstrapCushion(rootEl) {
     try {
       const qr = qrcode(0, 'M');
       qr.addData(link); qr.make();
-      qrSvg = qr.createSvgTag(8, 2);
+      qrSvg = qr.createSvgTag(8, 0);
       $('qrBox').innerHTML = qrSvg;
-      const svg = $('qrBox').querySelector('svg');
-      svg.style.width = '100%'; svg.style.height = '100%';
     } catch (e) {
       qrSvg = '';
-      $('qrBox').innerHTML = '<p class="text-xs text-red-600 p-2">URLが長すぎてQRにできません。入力を短くしてください。</p>';
+      $('qrBox').textContent = 'URLが長すぎてQRにできません。入力を短くしてください。';
     }
   }
 
@@ -400,10 +523,11 @@ function bootstrapCushion(rootEl) {
     if (!qrSvg) return;
     const img = new Image();
     img.onload = () => {
-      const c = document.createElement('canvas'); c.width = c.height = 800;
-      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 800, 800);
-      x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 800, 800);
-      const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'cushion-qr.png'; a.click();
+      const size = 1000, margin = 60;
+      const c = document.createElement('canvas'); c.width = c.height = size;
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, size, size);
+      x.imageSmoothingEnabled = false; x.drawImage(img, margin, margin, size - margin * 2, size - margin * 2);
+      const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'save-the-date-qr.png'; a.click();
     };
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qrSvg);
   });
@@ -412,19 +536,24 @@ function bootstrapCushion(rootEl) {
   function buildUniversalHtml() {
     const core = $('core').textContent;
     const css = $('shared-css').textContent;
+    const fonts = $('fonts').href;
     const S = '<' + '/script>';
     return `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>カレンダー仮押さえ</title>
-<script src="https://cdn.tailwindcss.com">${S}
+<meta name="theme-color" content="#f4f1ea">
+<meta name="color-scheme" content="light">
+<title>Save the Date</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="${fonts}">
 <style>${css}</style>
 </head>
-<body class="bg-slate-900">
+<body>
 <!-- 使い方: このファイルを公開し、 index.html?t=イベント名&s=2026-12-20T14:00&e=2026-12-20T16:00&l=場所&u=申込URL でアクセス -->
-<div id="cushionRoot" class="hidden"></div>
+<div id="cushionRoot" hidden></div>
 <script>${core}
 bootstrapCushion(document.getElementById('cushionRoot'));
 ${S}
@@ -441,7 +570,7 @@ ${S}
   });
 
   update();
-})();
+});
 </script>
 </body>
 </html>
