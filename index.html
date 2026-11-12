@@ -10,7 +10,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='24' rx='3' fill='%23fffdf8' stroke='%231c1b19' stroke-width='2'/%3E%3Crect x='3' y='5' width='26' height='8' rx='3' fill='%23c8402f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link id="fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link id="fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
 
 <!-- クッションページの見た目（書き出しHTMLにもそのまま入る） -->
@@ -21,8 +21,8 @@ body { margin: 0; background: #f4f1ea; }
 .cs {
   --paper: #f4f1ea; --card: #fffdf8; --ink: #1c1b19; --sub: #6b665d; --line: #d6d0c2;
   --red: #c8402f; --blue: #2b4c7e;
-  --mincho: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
-  --gothic: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --mincho: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+  --gothic: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
   background: var(--paper); color: var(--ink); min-height: 100%;
   font-family: var(--gothic); font-size: 15px; line-height: 1.7;
   -webkit-font-smoothing: antialiased; font-feature-settings: "palt";
@@ -31,6 +31,7 @@ body { margin: 0; background: #f4f1ea; }
 .cs-wrap { max-width: 440px; margin: 0 auto; padding: 30px 24px calc(34px + env(safe-area-inset-bottom)); }
 .cs a { color: inherit; }
 
+.cs-hero { display: block; width: 100%; height: auto; margin: 18px 0 0; border-radius: 22px; mix-blend-mode: multiply; background: #f4f1ea; }
 .cs-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 11px; font-weight: 700; letter-spacing: .34em; color: var(--sub); }
 .cs-eyebrow::before, .cs-eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
@@ -43,7 +44,7 @@ body { margin: 0; background: #f4f1ea; }
 .cs-leaf-head { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 18px 10px; background: var(--red); color: #fff; font-family: var(--mincho); font-weight: 700; letter-spacing: .12em; }
 .cs-leaf-head span:first-child { font-size: 17px; }
 .cs-leaf-head span:last-child { font-size: 11px; letter-spacing: .3em; opacity: .9; }
-.cs-day { font-family: var(--mincho); font-weight: 800; font-size: 132px; line-height: 1; text-align: center; padding: 20px 0 2px; letter-spacing: -.02em; font-feature-settings: "lnum"; }
+.cs-day { font-family: var(--mincho); font-weight: 900; font-size: 132px; line-height: 1; text-align: center; padding: 20px 0 2px; letter-spacing: -.02em; font-feature-settings: "lnum"; }
 .cs-day.sun { color: var(--red); } .cs-day.sat { color: var(--blue); }
 .cs-week { text-align: center; font-family: var(--mincho); font-weight: 700; font-size: 16px; letter-spacing: .4em; text-indent: .4em; padding-bottom: 18px; }
 .cs-week small { display: block; font-family: var(--gothic); font-size: 10px; letter-spacing: .34em; text-indent: .34em; color: var(--sub); font-weight: 500; margin-top: 2px; }
@@ -79,11 +80,13 @@ body { margin: 0; background: #f4f1ea; }
 <!-- 管理画面の見た目 -->
 <style>
 .ad { --paper: #f4f1ea; --card: #fffdf8; --ink: #1c1b19; --sub: #6b665d; --line: #d6d0c2; --red: #c8402f;
-  --mincho: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
-  font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif; color: var(--ink); font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  --mincho: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif; color: var(--ink); font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; min-height: 100vh; }
 .ad-head { border-bottom: 1px solid var(--ink); }
 .ad-head-in, .ad-main { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .ad-head-in { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-top: 22px; padding-bottom: 18px; flex-wrap: wrap; }
+.ad-brand { display: flex; align-items: center; gap: 12px; }
+.ad-brand img { width: 52px; height: 52px; border-radius: 14px; mix-blend-mode: multiply; }
 .ad-logo { font-family: var(--mincho); font-weight: 800; font-size: 22px; letter-spacing: .04em; margin: 0; }
 .ad-logo i { font-style: normal; color: var(--red); }
 .ad-tag { margin: 0; font-size: 13px; color: var(--sub); }
@@ -144,7 +147,7 @@ body { margin: 0; background: #f4f1ea; }
 <div id="admin" class="ad">
   <header class="ad-head">
     <div class="ad-head-in">
-      <h1 class="ad-logo">Save the Date<i>.</i> ページメーカー</h1>
+      <div class="ad-brand"><img src="img/spot.jpg" alt="" width="52" height="52"><h1 class="ad-logo">Save the Date<i>.</i> ページメーカー</h1></div>
       <p class="ad-tag">申込フォームの前に、まずカレンダーへ。3秒で仮押さえできるページとQRコードを作ります。</p>
     </div>
   </header>
@@ -221,6 +224,7 @@ body { margin: 0; background: #f4f1ea; }
 
 <!-- ===== 共有コア：画面表示・Google URL・ICS生成（書き出しHTMLにもそのまま入る） ===== -->
 <script id="core">
+let HERO_SRC = 'img/hero.jpg';
 const TZ = 'Asia/Tokyo';
 const TZ_OFFSET = 9;
 const pad = n => String(n).padStart(2, '0');
@@ -396,6 +400,7 @@ function renderCushion(root, ev) {
   root.innerHTML = `
   <div class="cs"><div class="cs-wrap">
     <div class="cs-eyebrow">SAVE THE DATE</div>
+    <img class="cs-hero" src="${HERO_SRC}" alt="" width="1000" height="672">
 
     <div class="cs-leaf">
       <div class="cs-leaf-body">
@@ -533,8 +538,14 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // 万能クッションページHTML（管理画面を含まない単一ファイル）
-  function buildUniversalHtml() {
-    const core = $('core').textContent;
+  async function toDataUri(url) {
+    const b = await (await fetch(url)).blob();
+    return await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
+  }
+  async function buildUniversalHtml() {
+    let core = $('core').textContent;
+    try { core = core.replace("let HERO_SRC = 'img/hero.jpg';", "let HERO_SRC = '" + await toDataUri('img/hero.jpg') + "';"); }
+    catch (e) { if (isHttp) core = core.replace("'img/hero.jpg'", "'" + new URL('img/hero.jpg', location.href).href + "'"); }
     const css = $('shared-css').textContent;
     const fonts = $('fonts').href;
     const S = '<' + '/script>';
@@ -561,10 +572,11 @@ ${S}
 </html>
 `;
   }
-  $('btnCopyHtml').addEventListener('click', () => copyText(buildUniversalHtml()));
-  $('btnDlHtml').addEventListener('click', () => {
+  $('btnCopyHtml').addEventListener('click', async () => copyText(await buildUniversalHtml()));
+  $('btnDlHtml').addEventListener('click', async () => {
+    const html = await buildUniversalHtml();
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([buildUniversalHtml()], { type: 'text/html;charset=utf-8' }));
+    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
     a.download = 'index.html'; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   });
