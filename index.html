@@ -32,6 +32,7 @@ body { margin: 0; background: #f4f1ea; }
 .cs a { color: inherit; }
 
 .cs-hero { display: block; width: 100%; height: auto; margin: 18px 0 0; border-radius: 22px; mix-blend-mode: multiply; background: #f4f1ea; }
+.cs-hero.custom { mix-blend-mode: normal; aspect-ratio: 3 / 2; object-fit: cover; }
 .cs-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 11px; font-weight: 700; letter-spacing: .34em; color: var(--sub); }
 .cs-eyebrow::before, .cs-eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
@@ -87,6 +88,12 @@ body { margin: 0; background: #f4f1ea; }
 .ad-head-in { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-top: 22px; padding-bottom: 18px; flex-wrap: wrap; }
 .ad-brand { display: flex; align-items: center; gap: 12px; }
 .ad-brand img { width: 52px; height: 52px; border-radius: 14px; mix-blend-mode: multiply; }
+.ad-banner { display: flex; gap: 14px; align-items: flex-start; }
+.ad-banner-thumb { flex: none; width: 132px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
+.ad-banner-ctl { flex: 1; min-width: 0; }
+.ad-banner-ctl .ad-actions { margin: 0 0 8px; }
+.ad-guide { font-size: 13px; line-height: 1.8; }
+.ad-guide ol { margin: 6px 0 0; padding-left: 20px; }
 .ad-logo { font-family: var(--mincho); font-weight: 800; font-size: 22px; letter-spacing: .04em; margin: 0; }
 .ad-logo i { font-style: normal; color: var(--red); }
 .ad-tag { margin: 0; font-size: 13px; color: var(--sub); }
@@ -168,6 +175,26 @@ body { margin: 0; background: #f4f1ea; }
           <input id="fLoc" type="text" placeholder="渋谷コミュニティスペース 3F" autocomplete="off"></label>
         <label class="ad-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
           <input id="fUrl" type="url" placeholder="https://forms.gle/…" autocomplete="off"></label>
+        <div class="ad-field"><span>バナー画像<em>未設定なら標準のイラスト</em></span>
+          <div class="ad-banner">
+            <img id="bnThumb" class="ad-banner-thumb" alt="">
+            <div class="ad-banner-ctl">
+              <div class="ad-actions">
+                <button id="bnPick" class="ad-btn" type="button">画像をアップロード</button>
+                <button id="bnClear" class="ad-btn ghost" type="button">標準に戻す</button>
+              </div>
+              <input id="bnFile" type="file" accept="image/*" hidden>
+              <input id="fBanner" type="text" placeholder="または画像のURL（https://…）" autocomplete="off">
+            </div>
+          </div>
+        </div>
+        <div id="bnGuide" class="ad-alert ad-guide" hidden>
+          <b>この画像は、まだ公開先に置かれていません。</b>QRから表示するには、次の2ステップが必要です。
+          <ol>
+            <li><button id="bnSave" class="ad-btn ghost" type="button" style="padding:4px 12px">画像を保存</button> で、整えた画像をこのPCに保存します。</li>
+            <li><a id="bnGh" target="_blank" rel="noopener" style="font-weight:700">GitHubの画像フォルダを開く</a> → 保存した画像をドラッグ＆ドロップ → 「Commit changes」を押します。</li>
+          </ol>
+        </div>
         <p class="ad-hint">時刻は日本時間として登録されます。</p>
       </section>
 
@@ -357,7 +384,7 @@ function downloadIcs(ev) {
 
 function evFromParams(search) {
   const q = new URLSearchParams(search);
-  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '' };
+  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '' };
 }
 function paramsFromEv(ev) {
   const q = new URLSearchParams();
@@ -366,11 +393,19 @@ function paramsFromEv(ev) {
   if (ev.end) q.set('e', ev.end);
   if (ev.loc) q.set('l', ev.loc);
   if (ev.url) q.set('u', ev.url);
+  if (ev.banner) q.set('b', ev.banner);
   return q.toString();
 }
 function isValidEv(ev) { return !!(ev.title && parseLocal(ev.start)); }
 function isAppleDevice() {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+}
+// バナー画像：https のURL か、同じ公開先の相対パスだけを許可
+function safeBanner(u) {
+  u = (u || '').trim();
+  if (/^https?:\/\//i.test(u)) return u;
+  if (/^[\w.\-\/]+$/.test(u) && !u.startsWith('/') && !u.includes('..')) return u;
+  return '';
 }
 function safeHttpUrl(u) { return /^https?:\/\//i.test(u) ? u : ''; }
 
@@ -390,6 +425,7 @@ function renderCushion(root, ev) {
   }
   const s = parseLocal(ev.start), w = weekday(s);
   const formUrl = safeHttpUrl(ev.url);
+  const bannerSrc = ev._bannerSrc || safeBanner(ev.banner);
   const google = `<a class="cs-btn" data-act="google" href="${esc(googleUrl(ev))}" target="_blank" rel="noopener">
       ${ICON.cal}<span class="cs-btn-text"><b>Googleカレンダーに追加</b><small>Android・Googleカレンダーをお使いの方</small></span>${ICON.chev}</a>`;
   const apple = `<button class="cs-btn" data-act="ics" type="button">
@@ -400,7 +436,8 @@ function renderCushion(root, ev) {
   root.innerHTML = `
   <div class="cs"><div class="cs-wrap">
     <div class="cs-eyebrow">SAVE THE DATE</div>
-    <img class="cs-hero" src="${HERO_SRC}" alt="" width="1000" height="672">
+    <img class="cs-hero${bannerSrc ? ' custom' : ''}" src="${esc(bannerSrc || HERO_SRC)}" alt="" width="1000" height="672"
+         onerror="this.onerror=null;this.className='cs-hero';this.src='${esc(HERO_SRC)}'">
 
     <div class="cs-leaf">
       <div class="cs-leaf-body">
@@ -454,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const $ = id => document.getElementById(id);
   const KEY = 'cushion-admin-v1';
-  const fields = { title: $('fTitle'), start: $('fStart'), end: $('fEnd'), loc: $('fLoc'), url: $('fUrl') };
+  const fields = { title: $('fTitle'), start: $('fStart'), end: $('fEnd'), loc: $('fLoc'), url: $('fUrl'), banner: $('fBanner') };
   const baseEl = $('fBase');
 
   const defaults = {
@@ -462,6 +499,7 @@ document.addEventListener('DOMContentLoaded', function () {
     start: '2026-12-20T14:00', end: '2026-12-20T16:00',
     loc: '渋谷コミュニティスペース 3F',
     url: 'https://forms.gle/example',
+    banner: '',
     base: ''
   };
   let saved = {};
@@ -472,7 +510,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const selfUrl = location.origin + location.pathname;
   baseEl.value = init.base || (isHttp ? selfUrl : '');
 
-  const getEv = () => ({ title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim() });
+  let upload = null; // { name, blob, url }
+  const getEv = () => {
+    const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim() };
+    return ev;
+  };
   const getBase = () => baseEl.value.trim() || (isHttp ? selfUrl : 'index.html');
 
   function toast(msg) {
@@ -492,11 +534,22 @@ document.addEventListener('DOMContentLoaded', function () {
   function update() {
     const ev = getEv();
     try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { base: baseEl.value.trim() }))); } catch (e) {}
+    const local = upload && ev.banner === 'img/' + upload.name;
+    const evView = Object.assign({}, ev, { _bannerSrc: local ? upload.url : '' });
+    $('bnGuide').hidden = !local;
+    $('bnThumb').src = evView._bannerSrc || safeBanner(ev.banner) || 'img/hero.jpg';
+    $('bnThumb').onerror = function () { this.onerror = null; this.src = 'img/hero.jpg'; };
+    try {
+      const u = new URL(getBase(), location.href);
+      const repo = u.pathname.split('/')[1];
+      const gh = u.hostname.endsWith('.github.io') && repo ? `https://github.com/${u.hostname.split('.')[0]}/${repo}/upload/main/img` : '';
+      $('bnGh').href = gh || '#'; $('bnGh').style.display = gh ? '' : 'none';
+    } catch (e) {}
 
     $('dateWarn').hidden = !(ev.start && ev.end && ev.end < ev.start);
     $('baseWarn').hidden = !!baseEl.value.trim() || isHttp;
 
-    renderCushion($('phoneScreen'), ev);
+    renderCushion($('phoneScreen'), evView);
 
     const link = getBase().split('?')[0] + '?' + paramsFromEv(ev);
     $('linkOut').value = link;
@@ -522,6 +575,36 @@ document.addEventListener('DOMContentLoaded', function () {
     update();
   });
   Object.values(fields).concat(baseEl).forEach(el => el.addEventListener('input', update));
+
+  // バナー画像：読み込み → 1000px幅のJPEGに縮小
+  async function loadBitmap(file) {
+    try { return await createImageBitmap(file); }
+    catch (e) {
+      return await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+    }
+  }
+  $('bnPick').addEventListener('click', () => $('bnFile').click());
+  $('bnFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      const bmp = await loadBitmap(f);
+      const w0 = bmp.width, h0 = bmp.height, k = Math.min(1, 1000 / Math.max(w0, h0 * 1.5));
+      const c = document.createElement('canvas'); c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+      if (upload) URL.revokeObjectURL(upload.url);
+      const name = 'banner-' + Date.now().toString(36) + '.jpg';
+      upload = { name, blob, url: URL.createObjectURL(blob) };
+      fields.banner.value = 'img/' + name;
+      update();
+    } catch (err) { toast('この画像は読み込めませんでした'); }
+  });
+  $('bnClear').addEventListener('click', () => { upload = null; fields.banner.value = ''; update(); });
+  $('bnSave').addEventListener('click', () => {
+    if (!upload) return;
+    const a = document.createElement('a'); a.href = upload.url; a.download = upload.name; a.click();
+  });
 
   $('btnCopyLink').addEventListener('click', () => copyText($('linkOut').value));
   $('btnQrPng').addEventListener('click', () => {
