@@ -221,17 +221,6 @@ const ICON = {
   arrow: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 };
 
-// カレンダーを使えない人向けに、コピーして貼れる形の文章を作る
-function shareText(ev) {
-  const s = parseLocal(ev.start), w = weekday(s);
-  const lines = [ev.title, `日時：${s[0]}年${s[1]}月${s[2]}日（${WEEK_JA[w]}）${timeRange(ev)}`];
-  if (ev.loc) lines.push(`場所：${ev.loc}`);
-  if (ev.detail) lines.push('', ev.detail.trim());
-  const form = ev.nf ? '' : safeHttpUrl(ev.url);
-  if (form) lines.push('', `お申し込み：${form}`);
-  return lines.join('\n');
-}
-
 function renderCushion(root, ev) {
   if (!isValidEv(ev)) {
     root.innerHTML = `<div class="cs"><div class="cs-empty"><div>
@@ -279,12 +268,8 @@ function renderCushion(root, ev) {
     <p class="cs-flash" data-flash hidden>カレンダーの画面が開きます。内容を確認して「追加」を押してください。まだ登録されていません。</p>
 
     <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する</li><li>「保存」（iPhoneは「追加」）を押して完了</li></ol>
-      <div class="cs-support"><b>使えるカレンダー</b><span class="cs-nw">Googleカレンダー</span>／<span class="cs-nw">iPhone・Macのカレンダー</span>／<span class="cs-nw">Outlook</span></div></div>
+      <div class="cs-support"><b>使えるカレンダー</b><span class="cs-nw">Googleカレンダー</span>／<span class="cs-nw">iPhone・Macのカレンダー</span>／<span class="cs-nw">Outlook</span><p>これ以外のカレンダーをお使いの方は、<span class="cs-nw">上の日時と場所を見て、</span><span class="cs-nw">ご自身で登録してください。</span></p></div></div>
     <p class="cs-help">うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
-    <details class="cs-other"><summary>上のカレンダーを使っていない方へ</summary>
-      <p>このページのボタンは、上の3つのカレンダーでのみ使えます。LINEカレンダーなど、ほかのアプリをお使いの方は、下のボタンで日時などをコピーして、お使いのアプリに貼り付けてください。</p>
-      <button class="cs-copy" type="button" data-copy>日時・場所をコピーする</button>
-    </details>
     ${ev.detail ? `<div class="cs-lead cs-lead-detail" data-detail>イベントの詳細</div>
     <div class="cs-detail">${esc(ev.detail)}</div>` : ''}
 
@@ -295,14 +280,6 @@ function renderCushion(root, ev) {
     </div>`}
     ${ev.nf ? '' : '<p class="cs-foot">都合が悪くなった場合は、カレンダーの予定を削除するだけで大丈夫です。</p>'}
   </div></div>`;
-  const copyBtn = root.querySelector('[data-copy]');
-  if (copyBtn) copyBtn.addEventListener('click', async () => {
-    const text = shareText(ev);
-    try { await navigator.clipboard.writeText(text); }
-    catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) {} ta.remove(); }
-    copyBtn.textContent = 'コピーしました';
-    setTimeout(() => { copyBtn.textContent = '日時・場所をコピーする'; }, 2200);
-  });
   const jump = root.querySelector('[data-jump]');
   if (jump) jump.addEventListener('click', () => root.querySelector('[data-detail]').scrollIntoView({ behavior: 'smooth', block: 'start' }));
   root.querySelector('[data-act="ics"]').addEventListener('click', () => {
