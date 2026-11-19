@@ -31,7 +31,7 @@ body { margin: 0; background: #f4f1ea; }
 .cs-wrap { max-width: 440px; margin: 0 auto; padding: 30px 24px calc(34px + env(safe-area-inset-bottom)); }
 .cs a { color: inherit; }
 
-.cs-hero { display: block; width: 100%; height: auto; margin: 14px 0 0; border-radius: 22px; mix-blend-mode: multiply; background: #f4f1ea; aspect-ratio: 16 / 9; object-fit: cover; object-position: 50% 40%; }
+.cs-hero { display: block; width: 100%; height: auto; margin: 14px 0 0; border-radius: 22px; mix-blend-mode: multiply; background: #f4f1ea; aspect-ratio: 2 / 1; object-fit: cover; object-position: 50% 40%; }
 .cs-hero.custom { mix-blend-mode: normal; object-position: center; }
 .cs-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 11px; font-weight: 700; letter-spacing: .34em; color: var(--sub); }
 .cs-eyebrow::before, .cs-eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--line); }
@@ -54,13 +54,31 @@ body { margin: 0; background: #f4f1ea; }
 
 .cs-title { font-family: var(--mincho); font-weight: 700; font-size: 25px; line-height: 1.55; margin: 38px 0 0; overflow-wrap: anywhere; word-break: auto-phrase; text-wrap: balance; }
 .cs-place { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; color: var(--sub); font-size: 14px; overflow-wrap: anywhere; }
-.cs-detail { margin-top: 22px; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cs-help { margin: 12px 0 0; font-size: 11.5px; color: var(--sub); line-height: 1.7; }
+.cs-top { display: flex; gap: 12px; align-items: stretch; margin-top: 14px; }
+.cs-top .cs-hero { flex: 1; min-width: 0; width: auto; height: auto; margin: 0 0 12px; aspect-ratio: auto; object-fit: cover; object-position: 55% 40%; }
+.cs-top .cs-leaf { flex: none; width: 118px; margin: 0 6px 12px 6px; }
+.cs-top .cs-leaf-head { padding: 6px 8px 5px; justify-content: flex-end; }
+.cs-top .cs-leaf-head span:first-child { font-size: 12px; letter-spacing: .02em; white-space: nowrap; }
+.cs-top .cs-leaf-head span:last-child { display: none; }
+.cs-top .cs-day { font-size: 60px; padding: 8px 0 0; }
+.cs-top .cs-week { font-size: 13px; padding-bottom: 6px; letter-spacing: .3em; text-indent: .3em; }
+.cs-top .cs-time { font-size: 13px; padding: 7px 4px; letter-spacing: .02em; }
+.cs-top .cs-seal { left: -14px; right: auto; top: -12px; width: 46px; height: 46px; font-size: 11px; box-shadow: inset 0 0 0 2px var(--card), inset 0 0 0 3px var(--red); }
+.cs-titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 22px; }
+.cs-titlerow .cs-title { margin: 0; flex: 1 1 auto; }
+.cs-jump { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--red); background: transparent; border: 1.5px solid var(--red); border-radius: 99px; cursor: pointer; }
+.cs-jump svg { animation: cs-bob 1.6s ease-in-out infinite; }
+@keyframes cs-bob { 50% { transform: translateY(3px); } }
+@media (prefers-reduced-motion: reduce) { .cs-jump svg { animation: none; } }
+.cs-lead-detail { margin-top: 34px; scroll-margin-top: 16px; }
+.cs-detail { margin-top: 0; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
 .cs-place svg { flex: none; margin-top: 4px; }
 
 .cs-lead { margin: 22px 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em; display: flex; align-items: center; gap: 10px; }
 .cs-lead::after { content: ""; flex: 1; height: 1px; background: var(--ink); }
-.cs-btns { display: grid; gap: 10px; }
-.cs-btn { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 68px; padding: 12px 16px 12px 18px; border-radius: 10px; border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s ease, background .15s ease; }
+.cs-btns { display: grid; gap: 8px; }
+.cs-btn { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 58px; padding: 9px 14px 9px 14px; border-radius: 10px; border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s ease, background .15s ease; }
 .cs-btn:active { transform: translateY(1px) scale(.99); }
 .cs-btn { box-shadow: 0 3px 0 rgba(28,27,25,.16); }
 .cs-btn > svg:first-child { box-sizing: content-box; padding: 8px; border-radius: 50%; background: rgba(200,64,47,.12); color: var(--red); }
@@ -506,18 +524,18 @@ function renderCushion(root, ev) {
   const formUrl = safeHttpUrl(ev.url);
   const bannerSrc = ev._bannerSrc || safeBanner(ev.banner);
   const google = `<a class="cs-btn" data-act="google" href="${esc(googleUrl(ev))}" target="_blank" rel="noopener">
-      ${ICON.cal}<span class="cs-btn-text"><b>Googleカレンダーに追加</b><small>Android・Googleカレンダーをお使いの方</small></span>${ICON.chev}</a>`;
+      ${ICON.cal}<span class="cs-btn-text"><b>Googleカレンダーに追加</b><small>Android・Googleカレンダーの方</small></span>${ICON.chev}</a>`;
   const apple = `<button class="cs-btn" data-act="ics" type="button">
-      ${ICON.bell}<span class="cs-btn-text"><b>iPhoneのカレンダーに追加</b><small>Mac・Outlookも対応／3日前と前日の正午に通知</small></span>${ICON.chev}</button>`;
+      ${ICON.bell}<span class="cs-btn-text"><b>iPhoneのカレンダーに追加</b><small>Mac・Outlook対応／3日前と前日に通知</small></span>${ICON.chev}</button>`;
   const btns = (isAppleDevice() ? [apple, google] : [google, apple]);
   btns[0] = btns[0].replace('class="cs-btn"', 'class="cs-btn primary"');
 
   root.innerHTML = `
   <div class="cs"><div class="cs-wrap">
     <div class="cs-eyebrow">SAVE THE DATE</div>
+    <div class="cs-top">
     <img class="cs-hero${bannerSrc ? ' custom' : ''}" src="${esc(bannerSrc || HERO_SRC)}" alt="" width="1000" height="672"
          onerror="this.onerror=null;this.className='cs-hero';this.src='${esc(HERO_SRC)}'">
-
     <div class="cs-leaf">
       <div class="cs-leaf-body">
         <div class="cs-leaf-head"><span>${s[0]}年 ${s[1]}月</span><span>${MONTH_EN[s[1] - 1]}</span></div>
@@ -527,23 +545,31 @@ function renderCushion(root, ev) {
       </div>
       <div class="cs-seal" aria-hidden="true">${ev.nf ? '<span>予定</span>' : '<span>仮押<br>さえ</span>'}</div>
     </div>
+    </div>
 
-    <h1 class="cs-title">${esc(ev.title)}</h1>
+    <div class="cs-titlerow">
+      <h1 class="cs-title">${esc(ev.title)}</h1>
+      ${ev.detail ? `<button class="cs-jump" type="button" data-jump>詳細を見る<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>` : ''}
+    </div>
     ${ev.loc ? `<div class="cs-place">${ICON.pin}<span>${esc(ev.loc)}</span></div>` : ''}
 
     <div class="cs-lead">${ev.nf ? '予定を、カレンダーに入れておく' : 'まずは、予定だけ押さえる'}</div>
     <div class="cs-btns">${btns.join('')}</div>
     <p class="cs-flash" data-flash hidden>ファイルを開き、「追加」を押すと登録されます。</p>
 
-    ${ev.detail ? `<div class="cs-detail">${esc(ev.detail)}</div>` : ''}
+    <p class="cs-help">うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
+    ${ev.detail ? `<div class="cs-lead cs-lead-detail" data-detail>イベントの詳細</div>
+    <div class="cs-detail">${esc(ev.detail)}</div>` : ''}
 
     ${ev.nf ? '' : `<div class="cs-note">
       <b>お申し込みは、まだ完了していません。</b>
       参加できそうな方は、あとから本申し込みをお願いします。
       ${formUrl ? `<br><a href="${esc(formUrl)}" target="_blank" rel="noopener">本申し込みフォームへ ${ICON.arrow}</a>` : ''}
     </div>`}
-    <p class="cs-foot">${ev.nf ? '' : '都合が悪くなった場合は、カレンダーの予定を削除するだけで大丈夫です。'}うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
+    ${ev.nf ? '' : '<p class="cs-foot">都合が悪くなった場合は、カレンダーの予定を削除するだけで大丈夫です。</p>'}
   </div></div>`;
+  const jump = root.querySelector('[data-jump]');
+  if (jump) jump.addEventListener('click', () => root.querySelector('[data-detail]').scrollIntoView({ behavior: 'smooth', block: 'start' }));
   root.querySelector('[data-act="ics"]').addEventListener('click', () => {
     downloadIcs(ev);
     root.querySelector('[data-flash]').hidden = false;
