@@ -168,6 +168,18 @@ function buildIcs(ev) {
   return lines.map(icsFold).join('\r\n') + '\r\n';
 }
 
+// 公開先（Cloudflare）では、予定データをサーバー経由で「カレンダーの予定」として開く。
+// iPhoneでは保存の確認なしに「予定を追加」の画面が出る。サーバーがない場所では、従来どおりファイルで渡す
+const ICS_VIA_SERVER = /^https?:$/.test(location.protocol) && !/github\.io$/.test(location.hostname);
+function openIcs(ev, target) {
+  if (!ICS_VIA_SERVER) return downloadIcs(ev);
+  const f = document.createElement('form');
+  f.method = 'POST'; f.action = '/api/ics'; f.target = target || '_self'; f.acceptCharset = 'utf-8'; f.hidden = true;
+  const t = document.createElement('textarea');
+  t.name = 'ics'; t.value = buildIcs(ev);
+  f.appendChild(t); document.body.appendChild(f);
+  f.submit(); f.remove();
+}
 function downloadIcs(ev) {
   const blob = new Blob([buildIcs(ev)], { type: 'text/calendar;charset=utf-8' });
   const a = document.createElement('a');
@@ -234,8 +246,11 @@ function renderCushion(root, ev) {
       ${ICON.cal}<span class="cs-btn-text"><b>Googleカレンダーに追加</b><small>Android・Googleカレンダーの方</small></span>${ICON.chev}</a>`;
   const apple = `<button class="cs-btn" data-act="ics" type="button">
       ${ICON.bell}<span class="cs-btn-text"><b>iPhoneのカレンダーに追加</b><small>Mac・Outlook対応${alertSummary(ev) ? '／' + alertSummary(ev) : ''}</small></span>${ICON.chev}</button>`;
-  const btns = (isAppleDevice() ? [apple, google] : [google, apple]);
+  // iPhone・iPadは、iPhone用を先頭に。それ以外では、ファイルで渡す方法を小さなリンクにして、押す前にダウンロードだと分かるようにする
+  const apple_ = isAppleDevice();
+  const btns = apple_ ? [apple, google] : [google];
   btns[0] = btns[0].replace('class="cs-btn"', 'class="cs-btn primary"');
+  const fileLink = apple_ ? '' : `<button class="cs-filelink" data-act="ics" type="button">Outlook・Macのカレンダーなどをお使いの方は<span class="cs-nw">予定ファイル（.ics）をダウンロード</span></button>`;
 
   root.innerHTML = `
   <div class="cs"><div class="cs-wrap">
@@ -265,9 +280,10 @@ function renderCushion(root, ev) {
     <div class="cs-lead">${ev.nf ? '予定を、カレンダーに入れておく' : 'まずは、予定だけ押さえる'}</div>
     <p class="cs-reassure"><span class="cs-nw">ボタンを押すと、</span><span class="cs-nw"><b>予定の登録画面</b>が開きます。</span><br><b><span class="cs-nw">押しただけで、</span><span class="cs-nw">予定がすぐに入ることはありません。</span></b></p>
     <div class="cs-btns">${btns.join('')}</div>
-    <p class="cs-flash" data-flash hidden>カレンダーの画面が開きます。内容を確認して「追加」を押してください。まだ登録されていません。</p>
+    ${fileLink}
+    <p class="cs-flash" data-flash hidden>カレンダーの画面が開きます。内容を確認して「カレンダーに追加」を押してください。まだ登録されていません。</p>
 
-    <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する<small class="cs-sub">通知のタイミングなども、自動で設定されます。<span class="cs-nw">必要に応じて、</span><span class="cs-nw">ご自身で設定し直してください。</span></small></li><li>「保存」（iPhoneは「追加」）を押して完了</li></ol>
+    <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する<small class="cs-sub">通知のタイミングなども、自動で設定されます。<span class="cs-nw">必要に応じて、</span><span class="cs-nw">ご自身で設定し直してください。</span></small></li><li>「保存」（iPhoneは「カレンダーに追加」）を押して完了</li></ol>
       <div class="cs-support"><b>使えるカレンダー</b><span class="cs-nw">Googleカレンダー</span>／<span class="cs-nw">iPhone・Macのカレンダー</span>／<span class="cs-nw">Outlook</span><p>これ以外のカレンダーをお使いの方は、<span class="cs-nw">上の日時と場所を見て、</span><span class="cs-nw">ご自身で登録をお願いします。</span></p></div></div>
     <p class="cs-help">うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
     ${ev.detail ? `<div class="cs-lead cs-lead-detail" data-detail>イベントの詳細</div>
@@ -283,8 +299,15 @@ function renderCushion(root, ev) {
   const jump = root.querySelector('[data-jump]');
   if (jump) jump.addEventListener('click', () => root.querySelector('[data-detail]').scrollIntoView({ behavior: 'smooth', block: 'start' }));
   root.querySelector('[data-act="ics"]').addEventListener('click', () => {
-    downloadIcs(ev);
-    root.querySelector('[data-flash]').hidden = false;
+    const flash = root.querySelector('[data-flash]');
+    if (apple_) {
+      // 管理画面のプレビューでは、管理画面から離れないよう別タブで開く
+      openIcs(ev, root.closest('.ad-screen') ? '_blank' : '_self');
+    } else {
+      downloadIcs(ev);
+      flash.textContent = '予定ファイルをダウンロードしました。ファイルを開いて、「追加」や「保存」を押すと登録されます。';
+    }
+    flash.hidden = false;
   });
 }
 
