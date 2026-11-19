@@ -54,6 +54,7 @@ body { margin: 0; background: #f4f1ea; }
 
 .cs-title { font-family: var(--mincho); font-weight: 700; font-size: 25px; line-height: 1.55; margin: 38px 0 0; overflow-wrap: anywhere; word-break: auto-phrase; text-wrap: balance; }
 .cs-place { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; color: var(--sub); font-size: 14px; overflow-wrap: anywhere; }
+.cs-detail { margin-top: 14px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
 .cs-place svg { flex: none; margin-top: 4px; }
 
 .cs-lead { margin: 30px 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em; display: flex; align-items: center; gap: 10px; }
@@ -189,6 +190,8 @@ body { margin: 0; background: #f4f1ea; }
           <input id="fLoc" type="text" placeholder="渋谷コミュニティスペース 3F" autocomplete="off"></label>
         <label class="ad-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
           <input id="fUrl" type="url" placeholder="https://forms.gle/…" autocomplete="off"></label>
+        <label class="ad-field"><span>イベントの詳細<em>ページとカレンダーの備考に入ります</em></span>
+          <textarea id="fDetail" rows="4" placeholder="内容・参加費・持ち物・当日の流れなど" style="font-family:inherit;font-size:14px;line-height:1.7;color:inherit"></textarea></label>
         <div class="ad-field"><span>カレンダーの備考<em>予定の「説明」欄に入る文章</em></span>
           <div id="memoTpl" class="ad-chips"></div>
           <textarea id="fMemo" rows="7" style="font-family:inherit;font-size:14px;line-height:1.7;color:inherit"></textarea>
@@ -267,6 +270,7 @@ body { margin: 0; background: #f4f1ea; }
             <tr><td><code>e</code></td><td>終了日時</td></tr>
             <tr><td><code>l</code></td><td>開催場所</td></tr>
             <tr><td><code>u</code></td><td>本申し込みフォームのURL</td></tr>
+            <tr><td><code>d</code></td><td>イベントの詳細</td></tr>
             <tr><td><code>mt</code></td><td>備考のテンプレート名（省略時は標準）</td></tr>
             <tr><td><code>m</code></td><td>備考の本文（書き換えたとき。<code>mt</code>より優先）</td></tr>
           </table>
@@ -325,12 +329,12 @@ function timeRange(ev) {
 
 function calTitle(ev) { return `【仮押さえ・未申込】${ev.title}`; }
 const MEMO_TEMPLATES = [
-  { id: 'tentative', label: '標準', text: '現在は【仮押さえ（未申込）】の状態です！\n参加できそうな方は、以下のリンクから本申し込みをお願いします👇\n{URL}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
-  { id: 'casual', label: 'やわらかめ', text: 'とりあえず予定だけ押さえておきました📌\n行けそうだったら、こちらから申し込んでね👇\n{URL}\n\n予定が合わなくなったら、この予定は消してOKです！' },
-  { id: 'formal', label: 'ていねい', text: '【ご案内】本予定は仮押さえです（お申し込みは未完了です）。\nご参加をご希望の方は、下記より本申し込みをお願いいたします。\n{URL}\n\nご都合が悪くなった場合は、お手数ですが本予定を削除してください。' },
-  { id: 'deadline', label: '締切あり', text: '現在は【仮押さえ（未申込）】の状態です！\n申込締切：○月○日まで\n参加される方は、お早めにこちらからお申し込みください👇\n{URL}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
-  { id: 'fee', label: '参加費・持ち物', text: '現在は【仮押さえ（未申込）】の状態です！\n参加が決まったら、こちらから本申し込みをお願いします👇\n{URL}\n\n■ 参加費：（記入してください）\n■ 持ち物：（記入してください）\n※都合が悪くなった場合は、この予定を削除してください。' },
-  { id: 'online', label: 'オンライン', text: 'オンライン開催の予定です💻（仮押さえ・未申込）\n参加できる方は、こちらから本申し込みをお願いします👇\n{URL}\n\n参加用のリンクは、お申し込みいただいた方にお送りします。\n※都合が悪くなった場合は、この予定を削除してください。' }
+  { id: 'tentative', label: '標準', text: '現在は【仮押さえ（未申込）】の状態です！\n参加できそうな方は、以下のリンクから本申し込みをお願いします👇\n{URL}\n\n{詳細}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
+  { id: 'casual', label: 'やわらかめ', text: 'とりあえず予定だけ押さえておきました📌\n行けそうだったら、こちらから申し込んでね👇\n{URL}\n\n{詳細}\n\n予定が合わなくなったら、この予定は消してOKです！' },
+  { id: 'formal', label: 'ていねい', text: '【ご案内】本予定は仮押さえです（お申し込みは未完了です）。\nご参加をご希望の方は、下記より本申し込みをお願いいたします。\n{URL}\n\n{詳細}\n\nご都合が悪くなった場合は、お手数ですが本予定を削除してください。' },
+  { id: 'deadline', label: '締切あり', text: '現在は【仮押さえ（未申込）】の状態です！\n申込締切：○月○日まで\n参加される方は、お早めにこちらからお申し込みください👇\n{URL}\n\n{詳細}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
+  { id: 'fee', label: '参加費・持ち物', text: '現在は【仮押さえ（未申込）】の状態です！\n参加が決まったら、こちらから本申し込みをお願いします👇\n{URL}\n\n{詳細}\n\n■ 参加費：（記入してください）\n■ 持ち物：（記入してください）\n※都合が悪くなった場合は、この予定を削除してください。' },
+  { id: 'online', label: 'オンライン', text: 'オンライン開催の予定です💻（仮押さえ・未申込）\n参加できる方は、こちらから本申し込みをお願いします👇\n{URL}\n\n{詳細}\n\n参加用のリンクは、お申し込みいただいた方にお送りします。\n※都合が悪くなった場合は、この予定を削除してください。' }
 ];
 function memoText(ev) {
   if (ev.memo) return ev.memo;
@@ -338,13 +342,18 @@ function memoText(ev) {
   return t.text;
 }
 function calDetails(ev) {
-  const lines = memoText(ev).replace(/\r\n?/g, '\n').split('\n');
+  const text = memoText(ev).replace(/\r\n?/g, '\n');
+  const det = (ev.detail || '').replace(/\r\n?/g, '\n').trim();
   const out = [];
-  lines.forEach(l => {
-    if (l.includes('{URL}')) { if (ev.url) out.push(l.split('{URL}').join(ev.url)); }
-    else out.push(l);
+  text.split('\n').forEach(l => {
+    let x = l;
+    if (x.includes('{URL}')) { if (!ev.url) return; x = x.split('{URL}').join(ev.url); }
+    if (x.includes('{詳細}')) { if (!det) return; x = x.split('{詳細}').join(det); }
+    out.push(x);
   });
-  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  let r = out.join('\n');
+  if (det && !text.includes('{詳細}')) r += '\n\n' + det;
+  return r.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function googleUrl(ev) {
@@ -433,7 +442,7 @@ function downloadIcs(ev) {
 
 function evFromParams(search) {
   const q = new URLSearchParams(search);
-  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '', memo: q.get('m') || '', memoT: q.get('mt') || '' };
+  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '', detail: q.get('d') || '', memo: q.get('m') || '', memoT: q.get('mt') || '' };
 }
 function paramsFromEv(ev) {
   const q = new URLSearchParams();
@@ -443,6 +452,7 @@ function paramsFromEv(ev) {
   if (ev.loc) q.set('l', ev.loc);
   if (ev.url) q.set('u', ev.url);
   if (ev.banner) q.set('b', ev.banner);
+  if (ev.detail) q.set('d', ev.detail);
   if (ev.memo) q.set('m', ev.memo);
   else if (ev.memoT && ev.memoT !== MEMO_TEMPLATES[0].id) q.set('mt', ev.memoT);
   return q.toString();
@@ -503,6 +513,8 @@ function renderCushion(root, ev) {
     <h1 class="cs-title">${esc(ev.title)}</h1>
     ${ev.loc ? `<div class="cs-place">${ICON.pin}<span>${esc(ev.loc)}</span></div>` : ''}
 
+    ${ev.detail ? `<div class="cs-detail">${esc(ev.detail)}</div>` : ''}
+
     <div class="cs-lead">まずは、予定だけ押さえる</div>
     <div class="cs-btns">${btns.join('')}</div>
     <p class="cs-flash" data-flash hidden>ファイルを開き、「追加」を押すと登録されます。</p>
@@ -542,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const $ = id => document.getElementById(id);
   const KEY = 'cushion-admin-v1';
-  const fields = { title: $('fTitle'), start: $('fStart'), end: $('fEnd'), loc: $('fLoc'), url: $('fUrl'), banner: $('fBanner') };
+  const fields = { title: $('fTitle'), start: $('fStart'), end: $('fEnd'), loc: $('fLoc'), url: $('fUrl'), banner: $('fBanner'), detail: $('fDetail') };
   const baseEl = $('fBase');
 
   const defaults = {
@@ -550,6 +562,7 @@ document.addEventListener('DOMContentLoaded', function () {
     start: '2026-12-20T14:00', end: '2026-12-20T16:00',
     loc: '渋谷コミュニティスペース 3F',
     url: 'https://forms.gle/example',
+    detail: '',
     banner: '',
     base: '',
     cloud: { cloud: 'a2esmadw', preset: 'cushion_banner' }
@@ -569,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let upload = null; // { name, blob, url }
   const getEv = () => {
-    const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim() };
+    const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim(), detail: fields.detail.value.replace(/\r\n?/g, '\n').trim() };
     const txt = memoEl.value.replace(/\r\n?/g, '\n').trim();
     const tpl = MEMO_TEMPLATES.find(t => t.text === txt);
     if (!txt || tpl) { ev.memo = ''; ev.memoT = tpl ? tpl.id : ''; }
