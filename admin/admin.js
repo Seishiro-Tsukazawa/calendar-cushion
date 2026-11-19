@@ -1,6 +1,11 @@
 (function () {
   const $ = id => document.getElementById(id);
-  const show = id => ['viewLoading', 'viewLogin', 'viewApp'].forEach(v => { $(v).hidden = v !== id; });
+  // 画面を切り替えるとき、キーボードを閉じてページの先頭に戻す（スマホで拡大・位置ずれしたまま残らないように）
+  const show = id => {
+    ['viewLoading', 'viewLogin', 'viewApp'].forEach(v => { $(v).hidden = v !== id; });
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    window.scrollTo(0, 0);
+  };
 
   // ---------- 通信 ----------
   async function api(path, opt = {}) {
