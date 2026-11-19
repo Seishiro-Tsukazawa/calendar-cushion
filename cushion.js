@@ -302,7 +302,7 @@ function renderCushion(root, ev) {
     const flash = root.querySelector('[data-flash]');
     if (apple_) {
       // 管理画面のプレビューでは、管理画面から離れないよう別タブで開く
-      openIcs(ev, root.closest('.ad-screen') ? '_blank' : '_self');
+      openIcs(ev, root.closest('.mk-screen') ? '_blank' : '_self');
     } else {
       downloadIcs(ev);
       flash.textContent = '予定ファイルをダウンロードしました。ファイルを開いて、「追加」や「保存」を押すと登録されます。';

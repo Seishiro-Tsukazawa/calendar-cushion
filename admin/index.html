@@ -18,115 +18,115 @@
 </head>
 <body>
 
-<div id="viewLoading" class="ad-center">読み込み中…</div>
+<div id="viewLoading" class="mk-center">読み込み中…</div>
 
-<div id="viewLogin" class="ad-login" hidden>
-  <div class="ad-login-card">
+<div id="viewLogin" class="mk-login" hidden>
+  <div class="mk-login-card">
     <img src="../img/spot.jpg" alt="" width="72" height="72">
     <h1>Save the Date<i>.</i> ページメーカー</h1>
     <p>ログインして、<br>イベントのページとQRコードを作ります。<br>初めての方は、招待コードが必要です。</p>
     <div id="gBtn"></div>
-    <div id="inviteG" class="ad-invite" hidden>
+    <div id="inviteG" class="mk-invite" hidden>
       <p>このGoogleアカウントは、初めてのご利用です。<br>招待コードを入力してください。</p>
       <input id="inviteGCode" type="text" placeholder="招待コード" autocomplete="off" autocapitalize="off">
-      <button id="btnInviteG" class="ad-btn" type="button">登録してログイン</button>
+      <button id="btnInviteG" class="mk-btn" type="button">登録してログイン</button>
     </div>
-    <div class="ad-or"><span>または</span></div>
-    <div class="ad-modes" role="tablist">
+    <div class="mk-or"><span>または</span></div>
+    <div class="mk-modes" role="tablist">
       <button id="modeLogin" class="on" type="button" role="tab">ユーザー名でログイン</button>
       <button id="modeReg" type="button" role="tab">新規登録</button>
     </div>
-    <form id="pwForm" class="ad-pwform" novalidate>
+    <form id="pwForm" class="mk-pwform" novalidate>
       <input id="pwUser" type="text" placeholder="ユーザー名（英数字・_・- の3〜20文字）" autocomplete="username" autocapitalize="off" spellcheck="false">
       <input id="pwPass" type="password" placeholder="パスワード（8文字以上）" autocomplete="current-password">
       <input id="pwInvite" type="text" placeholder="招待コード" autocomplete="off" autocapitalize="off" hidden>
-      <button id="pwSubmit" class="ad-btn" type="submit">ログイン</button>
+      <button id="pwSubmit" class="mk-btn" type="submit">ログイン</button>
     </form>
-    <p id="loginMsg" class="ad-login-msg" hidden></p>
+    <p id="loginMsg" class="mk-login-msg" hidden></p>
   </div>
 </div>
 
-<div id="viewApp" class="ad" hidden>
-  <header class="ad-head">
-    <div class="ad-head-in">
-      <div class="ad-brand"><img src="../img/spot.jpg" alt="" width="52" height="52"><h1 class="ad-logo">Save the Date<i>.</i> ページメーカー</h1></div>
-      <div class="ad-bar"><span><b id="meEmail"></b></span><button id="btnLogout" class="ad-btn ghost small" type="button">ログアウト</button></div>
+<div id="viewApp" class="mk" hidden>
+  <header class="mk-head">
+    <div class="mk-head-in">
+      <div class="mk-brand"><img src="../img/spot.jpg" alt="" width="52" height="52"><h1 class="mk-logo">Save the Date<i>.</i> ページメーカー</h1></div>
+      <div class="mk-bar"><span><b id="meEmail"></b></span><button id="btnLogout" class="mk-btn ghost small" type="button">ログアウト</button></div>
     </div>
   </header>
 
-  <main class="ad-main">
+  <main class="mk-main">
     <div>
-      <section class="ad-step">
-        <div class="ad-evhead">
-          <div class="ad-step-h" style="margin:0"><h2>あなたのイベント</h2></div>
-          <div style="display:flex;align-items:center;gap:12px"><span id="evCount"></span><button id="btnNew" class="ad-btn small" type="button">＋ 新しいイベント</button></div>
+      <section class="mk-step">
+        <div class="mk-evhead">
+          <div class="mk-step-h" style="margin:0"><h2>あなたのイベント</h2></div>
+          <div style="display:flex;align-items:center;gap:12px"><span id="evCount"></span><button id="btnNew" class="mk-btn small" type="button">＋ 新しいイベント</button></div>
         </div>
-        <ul id="evList" class="ad-evlist"></ul>
+        <ul id="evList" class="mk-evlist"></ul>
       </section>
 
-      <section class="ad-step">
-        <div class="ad-step-h"><span>01</span><h2>イベント情報</h2><b id="editState" class="ad-status"></b></div>
+      <section class="mk-step">
+        <div class="mk-step-h"><span>01</span><h2>イベント情報</h2><b id="editState" class="mk-status"></b></div>
         <p>入力した内容は、右のプレビューにすぐ反映されます。</p>
-        <label class="ad-field"><span>イベント名</span>
+        <label class="mk-field"><span>イベント名</span>
           <input id="fTitle" type="text" placeholder="冬のゆるっと作戦会議＆交流会" autocomplete="off"></label>
-        <div class="ad-row">
-          <label class="ad-field"><span>開始日時</span><input id="fStart" type="datetime-local"></label>
-          <label class="ad-field"><span>終了日時</span><input id="fEnd" type="datetime-local"></label>
+        <div class="mk-row">
+          <label class="mk-field"><span>開始日時</span><input id="fStart" type="datetime-local"></label>
+          <label class="mk-field"><span>終了日時</span><input id="fEnd" type="datetime-local"></label>
         </div>
-        <p id="dateWarn" class="ad-alert" hidden>終了日時が開始日時より前になっています。</p>
-        <label class="ad-field"><span>開催場所</span>
+        <p id="dateWarn" class="mk-alert" hidden>終了日時が開始日時より前になっています。</p>
+        <label class="mk-field"><span>開催場所</span>
           <input id="fLoc" type="text" placeholder="渋谷コミュニティスペース 3F" autocomplete="off"></label>
-        <label class="ad-check"><input id="fReq" type="checkbox" checked><span>本申し込みが必要<em>外すと「仮押さえ・未申込」の表記や申込案内が消えます</em></span></label>
-        <label id="urlField" class="ad-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
+        <label class="mk-check"><input id="fReq" type="checkbox" checked><span>本申し込みが必要<em>外すと「仮押さえ・未申込」の表記や申込案内が消えます</em></span></label>
+        <label id="urlField" class="mk-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
           <input id="fUrl" type="url" placeholder="https://forms.gle/…" autocomplete="off"></label>
-        <label class="ad-field"><span>イベントの詳細<em>ページとカレンダーの備考に入ります</em></span>
+        <label class="mk-field"><span>イベントの詳細<em>ページとカレンダーの備考に入ります</em></span>
           <textarea id="fDetail" rows="4" placeholder="内容・参加費・持ち物・当日の流れなど" style="font-family:inherit;font-size:14px;line-height:1.7;color:inherit"></textarea></label>
-        <div class="ad-field"><span>カレンダーの備考<em>予定の「説明」欄に入る文章</em></span>
-          <div id="memoTpl" class="ad-chips"></div>
+        <div class="mk-field"><span>カレンダーの備考<em>予定の「説明」欄に入る文章</em></span>
+          <div id="memoTpl" class="mk-chips"></div>
           <textarea id="fMemo" rows="7" style="font-family:inherit;font-size:14px;line-height:1.7;color:inherit"></textarea>
-          <p class="ad-hint" style="margin-top:6px">テンプレートを選んで自由に書き換えられます。<code>{URL}</code> の行は、申し込みURLに置き換わります。</p>
-          <p id="memoWarn" class="ad-alert" hidden>「○」や「記入してください」が残っています。内容を書き換えてください。</p>
+          <p class="mk-hint" style="margin-top:6px">テンプレートを選んで自由に書き換えられます。<code>{URL}</code> の行は、申し込みURLに置き換わります。</p>
+          <p id="memoWarn" class="mk-alert" hidden>「○」や「記入してください」が残っています。内容を書き換えてください。</p>
         </div>
-        <div class="ad-field"><span>通知<em>iPhone・Mac・Outlook向けの予定に入ります</em></span>
-          <div id="alertBox" class="ad-chips"></div>
-          <p class="ad-hint" style="margin-top:6px">複数選べます。選ばなければ、通知なしになります。Googleカレンダー用のボタンは、通知をURLで指定できないため、使う人のGoogleカレンダーの設定に従います。</p>
+        <div class="mk-field"><span>通知<em>iPhone・Mac・Outlook向けの予定に入ります</em></span>
+          <div id="alertBox" class="mk-chips"></div>
+          <p class="mk-hint" style="margin-top:6px">複数選べます。選ばなければ、通知なしになります。Googleカレンダー用のボタンは、通知をURLで指定できないため、使う人のGoogleカレンダーの設定に従います。</p>
         </div>
-        <div class="ad-field"><span>バナー画像<em>未設定なら標準のイラスト</em></span>
-          <div class="ad-banner">
-            <img id="bnThumb" class="ad-banner-thumb" alt="">
+        <div class="mk-field"><span>バナー画像<em>未設定なら標準のイラスト</em></span>
+          <div class="mk-banner">
+            <img id="bnThumb" class="mk-banner-thumb" alt="">
             <input id="fBanner" type="hidden">
           </div>
         </div>
-        <div id="bnSeasons" class="ad-tabs" role="tablist" aria-label="季節"></div>
-        <div id="bnPresets" class="ad-presets" style="margin-bottom:16px"></div>
-        <p class="ad-hint">時刻は日本時間として登録されます。</p>
+        <div id="bnSeasons" class="mk-tabs" role="tablist" aria-label="季節"></div>
+        <div id="bnPresets" class="mk-presets" style="margin-bottom:16px"></div>
+        <p class="mk-hint">時刻は日本時間として登録されます。</p>
       </section>
 
-      <section class="ad-step">
-        <div class="ad-step-h"><span>02</span><h2>保存とURL・QRコード</h2></div>
+      <section class="mk-step">
+        <div class="mk-step-h"><span>02</span><h2>保存とURL・QRコード</h2></div>
         <p id="pubLead">内容を保存すると、配布用のURLとQRコードが発行されます。</p>
-        <p id="dirtyWarn" class="ad-alert" hidden>変更がまだ保存されていません。保存すると、すでに配ったQRコードにも新しい内容が反映されます。</p>
-        <div class="ad-actions" style="margin:0 0 20px"><button id="btnSave" class="ad-btn" type="button">保存してURLを発行する</button></div>
-        <div id="pubBox" class="ad-share" hidden>
-          <div id="qrBox" class="ad-qr"></div>
+        <p id="dirtyWarn" class="mk-alert" hidden>変更がまだ保存されていません。保存すると、すでに配ったQRコードにも新しい内容が反映されます。</p>
+        <div class="mk-actions" style="margin:0 0 20px"><button id="btnSave" class="mk-btn" type="button">保存してURLを発行する</button></div>
+        <div id="pubBox" class="mk-share" hidden>
+          <div id="qrBox" class="mk-qr"></div>
           <div>
             <textarea id="linkOut" readonly rows="2" aria-label="配布用URL"></textarea>
-            <div class="ad-actions">
-              <button id="btnCopyLink" class="ad-btn" type="button">URLをコピー</button>
-              <button id="btnQrPng" class="ad-btn ghost" type="button">QRを画像で保存</button>
-              <a id="btnOpenLink" class="ad-btn ghost" target="_blank" rel="noopener">開いて確認</a>
+            <div class="mk-actions">
+              <button id="btnCopyLink" class="mk-btn" type="button">URLをコピー</button>
+              <button id="btnQrPng" class="mk-btn ghost" type="button">QRを画像で保存</button>
+              <a id="btnOpenLink" class="mk-btn ghost" target="_blank" rel="noopener">開いて確認</a>
             </div>
           </div>
         </div>
       </section>
     </div>
 
-    <aside class="ad-preview">
-      <div class="ad-preview-cap"><b>PREVIEW</b><span>ボタンは実際に動作します</span></div>
-      <div class="ad-phone"><div class="ad-phone-in"><div id="phoneScreen" class="ad-screen"></div></div></div>
+    <aside class="mk-preview">
+      <div class="mk-preview-cap"><b>PREVIEW</b><span>ボタンは実際に動作します</span></div>
+      <div class="mk-phone"><div class="mk-phone-in"><div id="phoneScreen" class="mk-screen"></div></div></div>
     </aside>
   </main>
-  <div id="toast" class="ad-toast" role="status"></div>
+  <div id="toast" class="mk-toast" role="status"></div>
 </div>
 
 <script src="../cushion.js"></script>

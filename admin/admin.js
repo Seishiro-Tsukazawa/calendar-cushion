@@ -195,13 +195,13 @@
   function isDirty() { return currentId ? JSON.stringify(getEv()) !== snapshot : isNewAndFilled(); }
 
   function renderPresets() {
-    $('bnSeasons').innerHTML = SEASONS.map(([s, l]) => `<button type="button" role="tab" class="ad-tab${s === season ? ' on' : ''}" data-s="${s}" aria-selected="${s === season}">${l}</button>`).join('');
-    $('bnPresets').innerHTML = THEMES.map(([t, l]) => `<button type="button" class="ad-preset" data-path="${presetPath(season, t)}" aria-label="${l}"><img src="${presetThumb(season, t)}" alt="" loading="lazy"><span>${l}</span></button>`).join('');
+    $('bnSeasons').innerHTML = SEASONS.map(([s, l]) => `<button type="button" role="tab" class="mk-tab${s === season ? ' on' : ''}" data-s="${s}" aria-selected="${s === season}">${l}</button>`).join('');
+    $('bnPresets').innerHTML = THEMES.map(([t, l]) => `<button type="button" class="mk-preset" data-path="${presetPath(season, t)}" aria-label="${l}"><img src="${presetThumb(season, t)}" alt="" loading="lazy"><span>${l}</span></button>`).join('');
     markPresets();
   }
   function markPresets() {
     const v = fields.banner.value.trim();
-    document.querySelectorAll('.ad-preset').forEach(el => el.classList.toggle('on', el.dataset.path === v));
+    document.querySelectorAll('.mk-preset').forEach(el => el.classList.toggle('on', el.dataset.path === v));
   }
 
   function renderList() {
@@ -210,8 +210,8 @@
       const p = parseLocal(e.start);
       const d = p ? `${p[0]}/${p[1]}/${p[2]}（${WEEK_JA[weekday(p)]}）${p[3]}:${pad(p[4])}` : '';
       return `<li class="${e.id === currentId ? 'on' : ''}" data-id="${esc(e.id)}"><div class="ev-main"><div class="ev-t">${esc(e.title || '（無題）')}</div><div class="ev-d">${esc(d)}</div></div>
-        <div class="ev-acts"><button class="ad-btn small ghost" data-act="edit" type="button">編集</button><button class="ad-btn small ghost" data-act="copy" type="button">URLをコピー</button><button class="ad-btn small danger" data-act="del" type="button">削除</button></div></li>`;
-    }).join('') : '<li class="ad-evempty">まだイベントがありません。下のフォームから作成してください。</li>';
+        <div class="ev-acts"><button class="mk-btn small ghost" data-act="edit" type="button">編集</button><button class="mk-btn small ghost" data-act="copy" type="button">URLをコピー</button><button class="mk-btn small danger" data-act="del" type="button">削除</button></div></li>`;
+    }).join('') : '<li class="mk-evempty">まだイベントがありません。下のフォームから作成してください。</li>';
   }
 
   function update() {
@@ -220,15 +220,15 @@
     $('bnThumb').src = bannerUrl(ev.banner) || HERO_SRC;
     $('bnThumb').onerror = function () { this.onerror = null; this.src = HERO_SRC; };
     $('urlField').hidden = ev.nf;
-    $('memoTpl').innerHTML = MEMO_TEMPLATES.filter(t => !!t.nf === ev.nf).map(t => `<button type="button" class="ad-chip${ev.memoT === t.id ? ' on' : ''}" data-id="${t.id}">${t.label}</button>`).join('');
-    $('alertBox').innerHTML = ALERTS.map(a => `<button type="button" class="ad-chip${alertSel.has(a.id) ? ' on' : ''}" data-id="${a.id}" aria-pressed="${alertSel.has(a.id)}">${a.name}</button>`).join('');
+    $('memoTpl').innerHTML = MEMO_TEMPLATES.filter(t => !!t.nf === ev.nf).map(t => `<button type="button" class="mk-chip${ev.memoT === t.id ? ' on' : ''}" data-id="${t.id}">${t.label}</button>`).join('');
+    $('alertBox').innerHTML = ALERTS.map(a => `<button type="button" class="mk-chip${alertSel.has(a.id) ? ' on' : ''}" data-id="${a.id}" aria-pressed="${alertSel.has(a.id)}">${a.name}</button>`).join('');
     $('memoWarn').hidden = !/記入してください|○/.test(memoEl.value);
     $('dateWarn').hidden = !(ev.start && ev.end && ev.end < ev.start);
     renderCushion($('phoneScreen'), ev);
 
     const st = $('editState');
     st.textContent = currentId ? '保存済みを編集中' : '新規（未保存）';
-    st.className = 'ad-status' + (currentId ? ' saved' : '');
+    st.className = 'mk-status' + (currentId ? ' saved' : '');
     const dirty = isDirty();
     $('dirtyWarn').hidden = !(currentId && dirty);
     $('btnSave').textContent = currentId ? '変更を保存する' : '保存してURLを発行する';
@@ -318,21 +318,21 @@
       update();
     });
     $('memoTpl').addEventListener('click', e => {
-      const b = e.target.closest('.ad-chip'); if (!b) return;
+      const b = e.target.closest('.mk-chip'); if (!b) return;
       const t = MEMO_TEMPLATES.find(x => x.id === b.dataset.id);
       if (t) { memoEl.value = t.text; update(); }
     });
     $('alertBox').addEventListener('click', e => {
-      const b = e.target.closest('.ad-chip'); if (!b) return;
+      const b = e.target.closest('.mk-chip'); if (!b) return;
       if (alertSel.has(b.dataset.id)) alertSel.delete(b.dataset.id); else alertSel.add(b.dataset.id);
       update();
     });
     $('bnSeasons').addEventListener('click', e => {
-      const b = e.target.closest('.ad-tab'); if (!b) return;
+      const b = e.target.closest('.mk-tab'); if (!b) return;
       season = b.dataset.s; userSeason = true; renderPresets();
     });
     $('bnPresets').addEventListener('click', e => {
-      const b = e.target.closest('.ad-preset'); if (!b) return;
+      const b = e.target.closest('.mk-preset'); if (!b) return;
       autoBanner = false; fields.banner.value = b.dataset.path; update();
     });
 
