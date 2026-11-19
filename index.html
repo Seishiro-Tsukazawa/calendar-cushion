@@ -94,6 +94,9 @@ body { margin: 0; background: #f4f1ea; }
 .ad-banner-ctl .ad-actions { margin: 0 0 8px; }
 .ad-tabs { display: flex; gap: 6px; margin-top: 12px; }
 .ad-tab { flex: 1; font: inherit; font-weight: 700; font-size: 14px; padding: 7px 0; border-radius: 99px; border: 1.5px solid var(--line); background: var(--card); color: var(--sub); cursor: pointer; }
+.ad-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.ad-chip { font: inherit; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--card); color: var(--sub); cursor: pointer; }
+.ad-chip.on { background: var(--ink); border-color: var(--ink); color: var(--card); }
 .ad-tab.on { background: var(--ink); border-color: var(--ink); color: var(--card); }
 .ad-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
 .ad-preset { padding: 0; border: 2px solid transparent; border-radius: 12px; background: var(--card); cursor: pointer; font: inherit; color: var(--ink); text-align: center; overflow: hidden; outline: 1px solid var(--line); outline-offset: -1px; transition: transform .12s; }
@@ -186,6 +189,12 @@ body { margin: 0; background: #f4f1ea; }
           <input id="fLoc" type="text" placeholder="渋谷コミュニティスペース 3F" autocomplete="off"></label>
         <label class="ad-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
           <input id="fUrl" type="url" placeholder="https://forms.gle/…" autocomplete="off"></label>
+        <div class="ad-field"><span>カレンダーの備考<em>予定の「説明」欄に入る文章</em></span>
+          <div id="memoTpl" class="ad-chips"></div>
+          <textarea id="fMemo" rows="7" style="font-family:inherit;font-size:14px;line-height:1.7;color:inherit"></textarea>
+          <p class="ad-hint" style="margin-top:6px">テンプレートを選んで自由に書き換えられます。<code>{URL}</code> の行は、申し込みURLに置き換わります。</p>
+          <p id="memoWarn" class="ad-alert" hidden>「○」や「記入してください」が残っています。内容を書き換えてください。</p>
+        </div>
         <div class="ad-field"><span>バナー画像<em>未設定なら標準のイラスト</em></span>
           <div class="ad-banner">
             <img id="bnThumb" class="ad-banner-thumb" alt="">
@@ -258,6 +267,8 @@ body { margin: 0; background: #f4f1ea; }
             <tr><td><code>e</code></td><td>終了日時</td></tr>
             <tr><td><code>l</code></td><td>開催場所</td></tr>
             <tr><td><code>u</code></td><td>本申し込みフォームのURL</td></tr>
+            <tr><td><code>mt</code></td><td>備考のテンプレート名（省略時は標準）</td></tr>
+            <tr><td><code>m</code></td><td>備考の本文（書き換えたとき。<code>mt</code>より優先）</td></tr>
           </table>
         </details>
       </section>
@@ -313,11 +324,27 @@ function timeRange(ev) {
 }
 
 function calTitle(ev) { return `【仮押さえ・未申込】${ev.title}`; }
+const MEMO_TEMPLATES = [
+  { id: 'tentative', label: '標準', text: '現在は【仮押さえ（未申込）】の状態です！\n参加できそうな方は、以下のリンクから本申し込みをお願いします👇\n{URL}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
+  { id: 'casual', label: 'やわらかめ', text: 'とりあえず予定だけ押さえておきました📌\n行けそうだったら、こちらから申し込んでね👇\n{URL}\n\n予定が合わなくなったら、この予定は消してOKです！' },
+  { id: 'formal', label: 'ていねい', text: '【ご案内】本予定は仮押さえです（お申し込みは未完了です）。\nご参加をご希望の方は、下記より本申し込みをお願いいたします。\n{URL}\n\nご都合が悪くなった場合は、お手数ですが本予定を削除してください。' },
+  { id: 'deadline', label: '締切あり', text: '現在は【仮押さえ（未申込）】の状態です！\n申込締切：○月○日まで\n参加される方は、お早めにこちらからお申し込みください👇\n{URL}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
+  { id: 'fee', label: '参加費・持ち物', text: '現在は【仮押さえ（未申込）】の状態です！\n参加が決まったら、こちらから本申し込みをお願いします👇\n{URL}\n\n■ 参加費：（記入してください）\n■ 持ち物：（記入してください）\n※都合が悪くなった場合は、この予定を削除してください。' },
+  { id: 'online', label: 'オンライン', text: 'オンライン開催の予定です💻（仮押さえ・未申込）\n参加できる方は、こちらから本申し込みをお願いします👇\n{URL}\n\n参加用のリンクは、お申し込みいただいた方にお送りします。\n※都合が悪くなった場合は、この予定を削除してください。' }
+];
+function memoText(ev) {
+  if (ev.memo) return ev.memo;
+  const t = MEMO_TEMPLATES.find(x => x.id === ev.memoT) || MEMO_TEMPLATES[0];
+  return t.text;
+}
 function calDetails(ev) {
-  const lines = ['現在は【仮押さえ（未申込）】の状態です！', '参加できそうな方は、以下のリンクから本申し込みをお願いします👇'];
-  if (ev.url) lines.push(ev.url);
-  lines.push('', '※都合が悪くなった場合は、この予定を削除してください。');
-  return lines.join('\n');
+  const lines = memoText(ev).replace(/\r\n?/g, '\n').split('\n');
+  const out = [];
+  lines.forEach(l => {
+    if (l.includes('{URL}')) { if (ev.url) out.push(l.split('{URL}').join(ev.url)); }
+    else out.push(l);
+  });
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function googleUrl(ev) {
@@ -406,7 +433,7 @@ function downloadIcs(ev) {
 
 function evFromParams(search) {
   const q = new URLSearchParams(search);
-  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '' };
+  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '', memo: q.get('m') || '', memoT: q.get('mt') || '' };
 }
 function paramsFromEv(ev) {
   const q = new URLSearchParams();
@@ -416,6 +443,8 @@ function paramsFromEv(ev) {
   if (ev.loc) q.set('l', ev.loc);
   if (ev.url) q.set('u', ev.url);
   if (ev.banner) q.set('b', ev.banner);
+  if (ev.memo) q.set('m', ev.memo);
+  else if (ev.memoT && ev.memoT !== MEMO_TEMPLATES[0].id) q.set('mt', ev.memoT);
   return q.toString();
 }
 function isValidEv(ev) { return !!(ev.title && parseLocal(ev.start)); }
@@ -529,6 +558,8 @@ document.addEventListener('DOMContentLoaded', function () {
   try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
   const init = Object.assign({}, defaults, saved);
   Object.keys(fields).forEach(k => fields[k].value = init[k] || '');
+  const memoEl = $('fMemo');
+  memoEl.value = init.memoText || memoText({ memoT: init.memoT });
   $('fCloud').value = (init.cloud && init.cloud.cloud) || defaults.cloud.cloud;
   $('fPreset').value = (init.cloud && init.cloud.preset) || defaults.cloud.preset;
   $('cloudBox').open = !($('fCloud').value && $('fPreset').value);
@@ -539,6 +570,10 @@ document.addEventListener('DOMContentLoaded', function () {
   let upload = null; // { name, blob, url }
   const getEv = () => {
     const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim() };
+    const txt = memoEl.value.replace(/\r\n?/g, '\n').trim();
+    const tpl = MEMO_TEMPLATES.find(t => t.text === txt);
+    if (!txt || tpl) { ev.memo = ''; ev.memoT = tpl ? tpl.id : ''; }
+    else { ev.memo = txt; ev.memoT = ''; }
     return ev;
   };
   const getBase = () => baseEl.value.trim() || (isHttp ? selfUrl : 'index.html');
@@ -559,7 +594,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let qrSvg = '';
   function update() {
     const ev = getEv();
-    try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { base: baseEl.value.trim(), cloud: { cloud: $('fCloud').value.trim(), preset: $('fPreset').value.trim() } }))); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { memoText: memoEl.value, base: baseEl.value.trim(), cloud: { cloud: $('fCloud').value.trim(), preset: $('fPreset').value.trim() } }))); } catch (e) {}
     const local = upload && ev.banner === 'img/' + upload.name;
     const evView = Object.assign({}, ev, { _bannerSrc: local ? upload.url : '' });
     $('bnGuide').hidden = !local;
@@ -573,6 +608,8 @@ document.addEventListener('DOMContentLoaded', function () {
       $('bnGh').href = gh || '#'; $('bnGh').style.display = gh ? '' : 'none';
     } catch (e) {}
 
+    $('memoTpl').innerHTML = MEMO_TEMPLATES.map(t => `<button type="button" class="ad-chip${ev.memoT === t.id ? ' on' : ''}" data-id="${t.id}">${t.label}</button>`).join('');
+    $('memoWarn').hidden = !/記入してください|○/.test(memoEl.value);
     $('dateWarn').hidden = !(ev.start && ev.end && ev.end < ev.start);
     $('baseWarn').hidden = !!baseEl.value.trim() || isHttp;
 
@@ -604,7 +641,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!userSeason && ns !== season) { season = ns; renderPresets(); }
     update();
   });
-  Object.values(fields).concat(baseEl, $('fCloud'), $('fPreset')).forEach(el => el.addEventListener('input', update));
+  Object.values(fields).concat(baseEl, $('fCloud'), $('fPreset'), memoEl).forEach(el => el.addEventListener('input', update));
+  $('memoTpl').addEventListener('click', e => {
+    const b = e.target.closest('.ad-chip'); if (!b) return;
+    const t = MEMO_TEMPLATES.find(x => x.id === b.dataset.id);
+    if (t) { memoEl.value = t.text; update(); }
+  });
 
   // バナー画像：読み込み → 1000px幅のJPEGに縮小
   async function loadBitmap(file) {
