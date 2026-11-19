@@ -9,7 +9,7 @@
     const r = await fetch('/api' + path, { method: opt.method || 'GET', headers, credentials: 'same-origin', body: opt.body ? JSON.stringify(opt.body) : undefined });
     let data = null;
     try { data = await r.json(); } catch (e) {}
-    if (r.status === 401 && path !== '/login' && !opt.silent) { goLogin('ログインの有効期限が切れました。もう一度ログインしてください。'); }
+    if (r.status === 401 && !opt.silent) { goLogin('ログインの有効期限が切れました。もう一度ログインしてください。'); }
     return { ok: r.ok, status: r.status, data };
   }
 
@@ -43,15 +43,66 @@
     if (clientId) renderGoogleButton();
   }
 
+  let pendingCredential = '';
+  const LOGIN_ERR = { 429: '試行回数が多すぎます。しばらくしてから、もう一度お試しください。', 503: '新規登録は、いま受け付けていません。' };
+
   async function onCredential(resp) {
     loginMsg('');
-    const r = await api('/login', { method: 'POST', body: { credential: resp.credential } });
-    if (!r.ok) { loginMsg('ログインできませんでした。もう一度お試しください。'); return; }
-    await enterApp(r.data);
+    pendingCredential = resp.credential;
+    $('inviteG').hidden = true;
+    const r = await api('/login', { method: 'POST', body: { credential: pendingCredential }, silent: true });
+    if (r.ok) return enterApp(r.data);
+    if (r.status === 403 && r.data && r.data.error === 'invite_required') { $('inviteG').hidden = false; $('inviteGCode').focus(); return; }
+    loginMsg(LOGIN_ERR[r.status] || 'ログインできませんでした。もう一度お試しください。');
   }
 
+  $('btnInviteG').addEventListener('click', async () => {
+    const invite = $('inviteGCode').value.trim();
+    if (!invite) { loginMsg('招待コードを入力してください。'); return; }
+    loginMsg('');
+    const r = await api('/login', { method: 'POST', body: { credential: pendingCredential, invite }, silent: true });
+    if (r.ok) { $('inviteG').hidden = true; $('inviteGCode').value = ''; return enterApp(r.data); }
+    if (r.status === 403) { loginMsg('招待コードが違います。'); return; }
+    if (r.status === 401) { $('inviteG').hidden = true; loginMsg('ログインの有効時間が切れました。もう一度「Googleでログイン」を押してください。'); return; }
+    loginMsg(LOGIN_ERR[r.status] || 'ログインできませんでした。もう一度お試しください。');
+  });
+
+  // ユーザー名とパスワード
+  let regMode = false;
+  function setMode(reg) {
+    regMode = reg;
+    $('modeLogin').classList.toggle('on', !reg); $('modeReg').classList.toggle('on', reg);
+    $('pwInvite').hidden = !reg;
+    $('pwSubmit').textContent = reg ? '登録してログイン' : 'ログイン';
+    $('pwPass').autocomplete = reg ? 'new-password' : 'current-password';
+    loginMsg('');
+  }
+  $('modeLogin').addEventListener('click', () => setMode(false));
+  $('modeReg').addEventListener('click', () => setMode(true));
+  $('pwForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const username = $('pwUser').value.trim(), password = $('pwPass').value, invite = $('pwInvite').value.trim();
+    if (!/^[A-Za-z0-9_-]{3,20}$/.test(username)) { loginMsg('ユーザー名は、英数字と _ - の3〜20文字で入力してください。'); return; }
+    if (regMode && password.length < 8) { loginMsg('パスワードは8文字以上にしてください。'); return; }
+    if (!password) { loginMsg('パスワードを入力してください。'); return; }
+    if (regMode && !invite) { loginMsg('招待コードを入力してください。'); return; }
+    loginMsg('');
+    const btn = $('pwSubmit'); btn.disabled = true;
+    try {
+      const r = await api(regMode ? '/register' : '/pwlogin', { method: 'POST', body: regMode ? { username, password, invite } : { username, password }, silent: true });
+      if (r.ok) { $('pwPass').value = ''; $('pwInvite').value = ''; return await enterApp(r.data); }
+      const code = r.data && r.data.error;
+      if (r.status === 401) loginMsg('ユーザー名またはパスワードが違います。');
+      else if (code === 'invite') loginMsg('招待コードが違います。');
+      else if (code === 'taken') loginMsg('このユーザー名は、すでに使われています。');
+      else if (code === 'username') loginMsg('ユーザー名は、英数字と _ - の3〜20文字で入力してください。');
+      else if (code === 'password') loginMsg('パスワードは8〜72文字で、ユーザー名と別のものにしてください。');
+      else loginMsg(LOGIN_ERR[r.status] || 'ログインできませんでした。もう一度お試しください。');
+    } finally { btn.disabled = false; }
+  });
+
   async function enterApp(me) {
-    $('meEmail').textContent = me.email || '';
+    $('meEmail').textContent = me.email || me.name || '';
     show('viewApp');
     if (!appStarted) { appStarted = true; await startApp(); }
     await loadList();

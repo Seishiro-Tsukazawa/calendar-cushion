@@ -24,8 +24,24 @@
   <div class="ad-login-card">
     <img src="../img/spot.jpg" alt="" width="72" height="72">
     <h1>Save the Date<i>.</i> ページメーカー</h1>
-    <p>Googleアカウントでログインして、<br>イベントのページとQRコードを作ります。</p>
+    <p>ログインして、<br>イベントのページとQRコードを作ります。<br>初めての方は、招待コードが必要です。</p>
     <div id="gBtn"></div>
+    <div id="inviteG" class="ad-invite" hidden>
+      <p>このGoogleアカウントは、初めてのご利用です。<br>招待コードを入力してください。</p>
+      <input id="inviteGCode" type="text" placeholder="招待コード" autocomplete="off" autocapitalize="off">
+      <button id="btnInviteG" class="ad-btn" type="button">登録してログイン</button>
+    </div>
+    <div class="ad-or"><span>または</span></div>
+    <div class="ad-modes" role="tablist">
+      <button id="modeLogin" class="on" type="button" role="tab">ユーザー名でログイン</button>
+      <button id="modeReg" type="button" role="tab">新規登録</button>
+    </div>
+    <form id="pwForm" class="ad-pwform" novalidate>
+      <input id="pwUser" type="text" placeholder="ユーザー名（英数字・_・- の3〜20文字）" autocomplete="username" autocapitalize="off" spellcheck="false">
+      <input id="pwPass" type="password" placeholder="パスワード（8文字以上）" autocomplete="current-password">
+      <input id="pwInvite" type="text" placeholder="招待コード" autocomplete="off" autocapitalize="off" hidden>
+      <button id="pwSubmit" class="ad-btn" type="submit">ログイン</button>
+    </form>
     <p id="loginMsg" class="ad-login-msg" hidden></p>
   </div>
 </div>
