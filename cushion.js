@@ -267,7 +267,7 @@ function renderCushion(root, ev) {
     <div class="cs-btns">${btns.join('')}</div>
     <p class="cs-flash" data-flash hidden>カレンダーの画面が開きます。内容を確認して「追加」を押してください。まだ登録されていません。</p>
 
-    <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する</li><li>「保存」（iPhoneは「追加」）を押して完了</li></ol>
+    <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する<small class="cs-sub">通知のタイミングなども、自動で設定されます。<span class="cs-nw">必要に応じて、</span><span class="cs-nw">ご自身で設定し直してください。</span></small></li><li>「保存」（iPhoneは「追加」）を押して完了</li></ol>
       <div class="cs-support"><b>使えるカレンダー</b><span class="cs-nw">Googleカレンダー</span>／<span class="cs-nw">iPhone・Macのカレンダー</span>／<span class="cs-nw">Outlook</span><p>これ以外のカレンダーをお使いの方は、<span class="cs-nw">上の日時と場所を見て、</span><span class="cs-nw">ご自身で登録をお願いします。</span></p></div></div>
     <p class="cs-help">うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
     ${ev.detail ? `<div class="cs-lead cs-lead-detail" data-detail>イベントの詳細</div>
