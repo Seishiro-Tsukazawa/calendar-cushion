@@ -293,6 +293,7 @@ body { margin: 0; background: #f4f1ea; }
         <details>
           <summary>URLパラメータの仕様</summary>
           <table>
+            <tr><td><code>p</code></td><td>下の項目をまとめた短縮形式（通常はこちら）</td></tr>
             <tr><td><code>t</code></td><td>イベント名</td></tr>
             <tr><td><code>s</code></td><td>開始日時（例 <code>2026-12-20T14:00</code>）</td></tr>
             <tr><td><code>e</code></td><td>終了日時</td></tr>
@@ -475,23 +476,39 @@ function downloadIcs(ev) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
 
+const CL_RE = /^https:\/\/res\.cloudinary\.com\/([^\/]+)\/image\/upload\/f_auto,q_auto,w_1000\/(.+)$/;
+function b64uEnc(str) {
+  let bin = '';
+  new TextEncoder().encode(str).forEach(c => bin += String.fromCharCode(c));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64uDec(b) {
+  b = b.replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
+  const bin = atob(b), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
 function evFromParams(search) {
   const q = new URLSearchParams(search);
+  if (q.has('p')) {
+    try {
+      const a = JSON.parse(b64uDec(q.get('p')));
+      let banner = a[5] || '';
+      if (banner.startsWith('~c/')) { const i = banner.indexOf('/', 3); banner = `https://res.cloudinary.com/${banner.slice(3, i)}/image/upload/f_auto,q_auto,w_1000/${banner.slice(i + 1)}`; }
+      return { title: a[0] || '', start: a[1] || '', end: a[2] || '', loc: a[3] || '', url: a[4] || '', banner, detail: a[6] || '', memo: a[7] || '', memoT: a[8] || '', nf: a[9] === 1 };
+    } catch (e) { return { title: '', start: '', end: '', loc: '', url: '', banner: '', detail: '', memo: '', memoT: '', nf: false }; }
+  }
   return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '', detail: q.get('d') || '', memo: q.get('m') || '', memoT: q.get('mt') || '', nf: q.get('n') === '1' };
 }
+// 日本語も短く収まる形式：項目を配列にしてbase64url化
 function paramsFromEv(ev) {
-  const q = new URLSearchParams();
-  if (ev.title) q.set('t', ev.title);
-  if (ev.start) q.set('s', ev.start);
-  if (ev.end) q.set('e', ev.end);
-  if (ev.loc) q.set('l', ev.loc);
-  if (ev.url) q.set('u', ev.url);
-  if (ev.banner) q.set('b', ev.banner);
-  if (ev.nf) q.set('n', '1');
-  if (ev.detail) q.set('d', ev.detail);
-  if (ev.memo) q.set('m', ev.memo);
-  else if (ev.memoT && ev.memoT !== defaultTpl(ev.nf).id) q.set('mt', ev.memoT);
-  return q.toString();
+  let banner = ev.banner || '';
+  const m = banner.match(CL_RE);
+  if (m) banner = `~c/${m[1]}/${m[2]}`;
+  const memoT = ev.memo ? '' : (ev.memoT && ev.memoT !== defaultTpl(ev.nf).id ? ev.memoT : '');
+  const a = [ev.title || '', ev.start || '', ev.end || '', ev.loc || '', ev.url || '', banner, ev.detail || '', ev.memo || '', memoT, ev.nf ? 1 : 0];
+  while (a.length && (a[a.length - 1] === '' || a[a.length - 1] === 0)) a.pop();
+  return 'p=' + b64uEnc(JSON.stringify(a));
 }
 function isValidEv(ev) { return !!(ev.title && parseLocal(ev.start)); }
 function isAppleDevice() {
@@ -590,7 +607,7 @@ function bootstrapCushion(rootEl) {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const params = new URLSearchParams(location.search);
-  if (params.has('t') && params.has('s')) {
+  if ((params.has('t') && params.has('s')) || params.has('p')) {
     document.getElementById('admin').remove();
     bootstrapCushion(document.getElementById('cushionRoot'));
     return;
