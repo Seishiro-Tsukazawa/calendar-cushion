@@ -134,8 +134,6 @@ body { margin: 0; background: #f4f1ea; }
 .ad-preset.on { border-color: var(--red); outline-color: transparent; }
 .ad-preset.on span { color: var(--red); }
 @media (max-width: 520px) { .ad-presets { grid-template-columns: repeat(3, 1fr); } }
-.ad-guide { font-size: 13px; line-height: 1.8; }
-.ad-guide ol { margin: 6px 0 0; padding-left: 20px; }
 .ad-logo { font-family: var(--mincho); font-weight: 800; font-size: 22px; letter-spacing: .04em; margin: 0; }
 .ad-logo i { font-style: normal; color: var(--red); }
 .ad-tag { margin: 0; font-size: 13px; color: var(--sub); }
@@ -231,32 +229,14 @@ body { margin: 0; background: #f4f1ea; }
             <img id="bnThumb" class="ad-banner-thumb" alt="">
             <div class="ad-banner-ctl">
               <div class="ad-actions">
-                <button id="bnPick" class="ad-btn" type="button">画像をアップロード</button>
                 <button id="bnClear" class="ad-btn ghost" type="button">標準に戻す</button>
               </div>
-              <input id="bnFile" type="file" accept="image/*" hidden>
-              <input id="fBanner" type="text" placeholder="または画像のURL（https://…）" autocomplete="off">
+              <input id="fBanner" type="hidden">
             </div>
           </div>
         </div>
         <div id="bnSeasons" class="ad-tabs" role="tablist" aria-label="季節"></div>
         <div id="bnPresets" class="ad-presets" style="margin-bottom:16px"></div>
-        <p id="bnStatus" class="ad-hint" hidden></p>
-        <details id="cloudBox" style="margin:-4px 0 16px">
-          <summary>画像の自動アップロード設定（Cloudinary）</summary>
-          <div class="ad-row" style="margin-top:10px">
-            <label class="ad-field"><span>クラウド名</span><input id="fCloud" type="text" placeholder="例: dxxxxxxxx" autocomplete="off"></label>
-            <label class="ad-field"><span>アップロード用プリセット名</span><input id="fPreset" type="text" placeholder="例: cushion_banner" autocomplete="off"></label>
-          </div>
-          <p class="ad-hint">設定すると、画像を選んだだけで公開用URLが自動で入ります。未設定のときは、手動で置く案内が表示されます。</p>
-        </details>
-        <div id="bnGuide" class="ad-alert ad-guide" hidden>
-          <b>この画像は、まだ公開先に置かれていません。</b>QRから表示するには、次の2ステップが必要です。
-          <ol>
-            <li><button id="bnSave" class="ad-btn ghost" type="button" style="padding:4px 12px">画像を保存</button> で、整えた画像をこのPCに保存します。</li>
-            <li><a id="bnGh" target="_blank" rel="noopener" style="font-weight:700">GitHubの画像フォルダを開く</a> → 保存した画像をドラッグ＆ドロップ → 「Commit changes」を押します。</li>
-          </ol>
-        </div>
         <p class="ad-hint">時刻は日本時間として登録されます。</p>
       </section>
 
@@ -280,30 +260,6 @@ body { margin: 0; background: #f4f1ea; }
           <label class="ad-field" style="margin-top:12px"><span>クッションページの公開先URL</span>
             <input id="fBase" type="url" placeholder="https://example.github.io/cushion/" autocomplete="off"></label>
           <p class="ad-hint">別の場所に置いたクッションページを使うときだけ変更します。</p>
-        </details>
-      </section>
-
-      <section class="ad-step">
-        <div class="ad-step-h"><span>03</span><h2>ページ本体の書き出し</h2></div>
-        <p>自分のサイトに置きたい場合に。1ファイルを公開すれば、URLのパラメータを変えるだけでどのイベントにも使い回せます。</p>
-        <div class="ad-actions" style="margin-top:0">
-          <button id="btnDlHtml" class="ad-btn" type="button">index.html をダウンロード</button>
-          <button id="btnCopyHtml" class="ad-btn ghost" type="button">HTMLをコピー</button>
-        </div>
-        <details>
-          <summary>URLパラメータの仕様</summary>
-          <table>
-            <tr><td><code>p</code></td><td>下の項目をまとめた短縮形式（通常はこちら）</td></tr>
-            <tr><td><code>t</code></td><td>イベント名</td></tr>
-            <tr><td><code>s</code></td><td>開始日時（例 <code>2026-12-20T14:00</code>）</td></tr>
-            <tr><td><code>e</code></td><td>終了日時</td></tr>
-            <tr><td><code>l</code></td><td>開催場所</td></tr>
-            <tr><td><code>u</code></td><td>本申し込みフォームのURL</td></tr>
-            <tr><td><code>n</code></td><td><code>1</code> のとき、申し込み不要の予定になります</td></tr>
-            <tr><td><code>d</code></td><td>イベントの詳細</td></tr>
-            <tr><td><code>mt</code></td><td>備考のテンプレート名（省略時は標準）</td></tr>
-            <tr><td><code>m</code></td><td>備考の本文（書き換えたとき。<code>mt</code>より優先）</td></tr>
-          </table>
         </details>
       </section>
     </div>
@@ -626,7 +582,6 @@ document.addEventListener('DOMContentLoaded', function () {
     detail: '',
     banner: '',
     base: '',
-    cloud: { cloud: 'a2esmadw', preset: 'cushion_banner' }
   };
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
@@ -635,14 +590,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const memoEl = $('fMemo');
   $('fReq').checked = !init.nf;
   memoEl.value = init.memoText || memoText({ memoT: init.memoT, nf: init.nf });
-  $('fCloud').value = (init.cloud && init.cloud.cloud) || defaults.cloud.cloud;
-  $('fPreset').value = (init.cloud && init.cloud.preset) || defaults.cloud.preset;
-  $('cloudBox').open = !($('fCloud').value && $('fPreset').value);
   const isHttp = /^https?:/.test(location.protocol);
   const selfUrl = location.origin + location.pathname;
   baseEl.value = init.base || (isHttp ? selfUrl : '');
 
-  let upload = null; // { name, blob, url }
   const getEv = () => {
     const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim(), nf: !$('fReq').checked, detail: fields.detail.value.replace(/\r\n?/g, '\n').trim() };
     const txt = memoEl.value.replace(/\r\n?/g, '\n').trim();
@@ -669,20 +620,11 @@ document.addEventListener('DOMContentLoaded', function () {
   let qrSvg = '';
   function update() {
     const ev = getEv();
-    try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { memoText: memoEl.value, base: baseEl.value.trim(), cloud: { cloud: $('fCloud').value.trim(), preset: $('fPreset').value.trim() } }))); } catch (e) {}
-    const local = upload && ev.banner === 'img/' + upload.name;
-    const evView = Object.assign({}, ev, { _bannerSrc: local ? upload.url : '' });
-    $('bnGuide').hidden = !local;
+    try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, ev, { memoText: memoEl.value, base: baseEl.value.trim() }))); } catch (e) {}
+    const evView = ev;
     markPresets();
-    $('bnThumb').src = evView._bannerSrc || safeBanner(ev.banner) || 'img/hero.jpg';
+    $('bnThumb').src = safeBanner(ev.banner) || 'img/hero.jpg';
     $('bnThumb').onerror = function () { this.onerror = null; this.src = 'img/hero.jpg'; };
-    try {
-      const u = new URL(getBase(), location.href);
-      const repo = u.pathname.split('/')[1];
-      const gh = u.hostname.endsWith('.github.io') && repo ? `https://github.com/${u.hostname.split('.')[0]}/${repo}/upload/main/img` : '';
-      $('bnGh').href = gh || '#'; $('bnGh').style.display = gh ? '' : 'none';
-    } catch (e) {}
-
     $('urlField').hidden = ev.nf;
     $('memoTpl').innerHTML = MEMO_TEMPLATES.filter(t => !!t.nf === ev.nf).map(t => `<button type="button" class="ad-chip${ev.memoT === t.id ? ' on' : ''}" data-id="${t.id}">${t.label}</button>`).join('');
     $('memoWarn').hidden = !/記入してください|○/.test(memoEl.value);
@@ -717,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!userSeason && ns !== season) { season = ns; renderPresets(); }
     update();
   });
-  Object.values(fields).concat(baseEl, $('fCloud'), $('fPreset'), memoEl).forEach(el => el.addEventListener('input', update));
+  Object.values(fields).concat(baseEl, memoEl).forEach(el => el.addEventListener('input', update));
   $('fReq').addEventListener('change', () => {
     const nf = !$('fReq').checked, cur = memoEl.value.replace(/\r\n?/g, '\n').trim();
     const legacy = t => t.text.replace('{詳細}\n\n', '').trim();
@@ -731,13 +673,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (t) { memoEl.value = t.text; update(); }
   });
 
-  // バナー画像：読み込み → 1000px幅のJPEGに縮小
-  async function loadBitmap(file) {
-    try { return await createImageBitmap(file); }
-    catch (e) {
-      return await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
-    }
-  }
   const SEASONS = [['spring', '春'], ['summer', '夏'], ['autumn', '秋'], ['winter', '冬']];
   const THEMES = [['gather', '集まり'], ['meal', '食事・乾杯'], ['study', '学び・講座'], ['music', '音楽・ライブ'], ['outdoor', 'お出かけ'], ['festival', 'お祭り'], ['family', 'ファミリー'], ['online', 'オンライン']];
   const presetPath = (s, t) => s === 'winter' ? (t === 'gather' ? '' : `img/preset-${t}.jpg`) : `img/${s}-${t}.jpg`;
@@ -761,54 +696,11 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   $('bnPresets').addEventListener('click', e => {
     const b = e.target.closest('.ad-preset'); if (!b) return;
-    autoBanner = false; upload = null; setStatus(''); fields.banner.value = b.dataset.path; update();
+    autoBanner = false; fields.banner.value = b.dataset.path; update();
   });
   renderPresets();
-  function setStatus(msg, bad) { const el = $('bnStatus'); el.hidden = !msg; el.textContent = msg || ''; el.style.color = bad ? 'var(--red)' : ''; }
-  async function uploadToCloud(blob, cloud, preset) {
-    const fd = new FormData();
-    fd.append('file', blob, 'banner.jpg'); fd.append('upload_preset', preset);
-    const r = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(cloud)}/image/upload`, { method: 'POST', body: fd });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.secure_url) throw new Error((j.error && j.error.message) || '通信エラー');
-    return j.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_1000/');
-  }
   fields.banner.addEventListener('input', () => { autoBanner = false; });
-  $('bnPick').addEventListener('click', () => $('bnFile').click());
-  $('bnFile').addEventListener('change', async e => {
-    const f = e.target.files[0]; e.target.value = '';
-    if (!f) return;
-    try {
-      const bmp = await loadBitmap(f);
-      const w0 = bmp.width, h0 = bmp.height, k = Math.min(1, 1000 / Math.max(w0, h0 * 1.5));
-      const c = document.createElement('canvas'); c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
-      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0, c.width, c.height);
-      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
-      if (upload) URL.revokeObjectURL(upload.url);
-      const name = 'banner-' + Date.now().toString(36) + '.jpg';
-      upload = { name, blob, url: URL.createObjectURL(blob) };
-      autoBanner = false;
-      fields.banner.value = 'img/' + name;
-      update();
-    } catch (err) { toast('この画像は読み込めませんでした'); return; }
-    const cn = $('fCloud').value.trim(), pr = $('fPreset').value.trim();
-    if (!cn || !pr) return;
-    const mine = upload;
-    setStatus('アップロード中…');
-    try {
-      const url = await uploadToCloud(mine.blob, cn, pr);
-      if (upload === mine) { URL.revokeObjectURL(mine.url); upload = null; fields.banner.value = url; update(); }
-      setStatus('アップロードしました。QRのURLに反映済みです。');
-    } catch (err) {
-      setStatus('自動アップロードに失敗しました（' + err.message + '）。下の手順で手動で置くこともできます。', true);
-    }
-  });
-  $('bnClear').addEventListener('click', () => { upload = null; autoBanner = true; setStatus(''); fields.banner.value = presetPath(seasonOfDate(fields.start.value), 'gather'); update(); });
-  $('bnSave').addEventListener('click', () => {
-    if (!upload) return;
-    const a = document.createElement('a'); a.href = upload.url; a.download = upload.name; a.click();
-  });
-
+  $('bnClear').addEventListener('click', () => { autoBanner = true; fields.banner.value = presetPath(seasonOfDate(fields.start.value), 'gather'); update(); });
   $('btnCopyLink').addEventListener('click', () => copyText($('linkOut').value));
   $('btnQrPng').addEventListener('click', () => {
     if (!qrSvg) return;
@@ -821,50 +713,6 @@ document.addEventListener('DOMContentLoaded', function () {
       const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'save-the-date-qr.png'; a.click();
     };
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qrSvg);
-  });
-
-  // 万能クッションページHTML（管理画面を含まない単一ファイル）
-  async function toDataUri(url) {
-    const b = await (await fetch(url)).blob();
-    return await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
-  }
-  async function buildUniversalHtml() {
-    let core = $('core').textContent;
-    try { core = core.replace("let HERO_SRC = 'img/hero.jpg';", "let HERO_SRC = '" + await toDataUri('img/hero.jpg') + "';"); }
-    catch (e) { if (isHttp) core = core.replace("'img/hero.jpg'", "'" + new URL('img/hero.jpg', location.href).href + "'"); }
-    const css = $('shared-css').textContent;
-    const fonts = $('fonts').href;
-    const S = '<' + '/script>';
-    return `<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f4f1ea">
-<meta name="color-scheme" content="light">
-<title>Save the Date</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="${fonts}">
-<style>${css}</style>
-</head>
-<body>
-<!-- 使い方: このファイルを公開し、 index.html?t=イベント名&s=2026-12-20T14:00&e=2026-12-20T16:00&l=場所&u=申込URL でアクセス -->
-<div id="cushionRoot" hidden></div>
-<script>${core}
-bootstrapCushion(document.getElementById('cushionRoot'));
-${S}
-</body>
-</html>
-`;
-  }
-  $('btnCopyHtml').addEventListener('click', async () => copyText(await buildUniversalHtml()));
-  $('btnDlHtml').addEventListener('click', async () => {
-    const html = await buildUniversalHtml();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
-    a.download = 'index.html'; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   });
 
   update();
