@@ -703,7 +703,9 @@ document.addEventListener('DOMContentLoaded', function () {
   Object.values(fields).concat(baseEl, $('fCloud'), $('fPreset'), memoEl).forEach(el => el.addEventListener('input', update));
   $('fReq').addEventListener('change', () => {
     const nf = !$('fReq').checked, cur = memoEl.value.replace(/\r\n?/g, '\n').trim();
-    if (!cur || MEMO_TEMPLATES.some(t => t.text === cur && !!t.nf !== nf)) memoEl.value = defaultTpl(nf).text;
+    const legacy = t => t.text.replace('{詳細}\n\n', '').trim();
+    if (!cur || MEMO_TEMPLATES.some(t => (t.text === cur || legacy(t) === cur) && !!t.nf !== nf)) { memoEl.value = defaultTpl(nf).text; toast('備考のテンプレートを切り替えました'); }
+    else toast('備考は編集済みのため、そのままにしています');
     update();
   });
   $('memoTpl').addEventListener('click', e => {
