@@ -27,9 +27,29 @@ function utcStamp(ms) {
   return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
 }
 // 開始日の N 日前 12:00（日本時間）を UTC で返す
-function alarmUtc(startVal, daysBefore) {
+function alarmUtc(startVal, daysBefore, hour = 12) {
   const p = parseLocal(startVal);
-  return utcStamp(Date.UTC(p[0], p[1] - 1, p[2] - daysBefore, 12 - TZ_OFFSET, 0, 0));
+  return utcStamp(Date.UTC(p[0], p[1] - 1, p[2] - daysBefore, hour - TZ_OFFSET, 0, 0));
+}
+
+// 通知の種類（管理画面で選べる）。day＝日本時間の指定時刻、rel＝開始の何分前
+const ALERTS = [
+  { id: '7d', name: '1週間前の正午', short: '1週間前', desc: '1週間前のお知らせ', kind: 'day', n: 7, h: 12 },
+  { id: '3d', name: '3日前の正午', short: '3日前', desc: '3日前のお知らせ', kind: 'day', n: 3, h: 12 },
+  { id: '1d', name: '前日の正午', short: '前日', desc: '明日です', kind: 'day', n: 1, h: 12 },
+  { id: '0d', name: '当日の朝9時', short: '当日朝', desc: '今日です', kind: 'day', n: 0, h: 9 },
+  { id: '3h', name: '3時間前', short: '3時間前', desc: '3時間後に始まります', kind: 'rel', min: 180 },
+  { id: '1h', name: '1時間前', short: '1時間前', desc: '1時間後に始まります', kind: 'rel', min: 60 },
+  { id: '30m', name: '30分前', short: '30分前', desc: '30分後に始まります', kind: 'rel', min: 30 }
+];
+const DEFAULT_ALERTS = ['3d', '1d'];
+function alertsOf(ev) {
+  const a = Array.isArray(ev.alerts) ? ev.alerts : DEFAULT_ALERTS;
+  return ALERTS.filter(x => a.includes(x.id));
+}
+function alertSummary(ev) {
+  const l = alertsOf(ev);
+  return l.length ? l.map(x => x.short).join('・') + 'に通知' : '';
 }
 function timeRange(ev) {
   const s = parseLocal(ev.start), e = parseLocal(ev.end);
@@ -110,11 +130,11 @@ function hashStr(s) {
 
 function buildIcs(ev) {
   const end = ev.end || ev.start;
-  const alarm = (days, label) => [
+  const alarm = a => [
     'BEGIN:VALARM',
     'ACTION:DISPLAY',
-    'DESCRIPTION:' + icsEscape(`${label}：${ev.title}${ev.nf ? '' : '（まだ未申込です）'}`),
-    `TRIGGER;VALUE=DATE-TIME:${alarmUtc(ev.start, days)}`,
+    'DESCRIPTION:' + icsEscape(`${a.desc}：${ev.title}${ev.nf ? '' : '（まだ未申込です）'}`),
+    a.kind === 'day' ? `TRIGGER;VALUE=DATE-TIME:${alarmUtc(ev.start, a.n, a.h)}` : `TRIGGER:-PT${a.min}M`,
     'END:VALARM'
   ];
   const lines = [
@@ -143,7 +163,7 @@ function buildIcs(ev) {
   ];
   if (ev.loc) lines.push('LOCATION:' + icsEscape(ev.loc));
   if (ev.url) lines.push('URL:' + ev.url);
-  lines.push(...alarm(3, '3日前のお知らせ'), ...alarm(1, '明日です'));
+  alertsOf(ev).forEach(a => lines.push(...alarm(a)));
   lines.push('END:VEVENT', 'END:VCALENDAR');
   return lines.map(icsFold).join('\r\n') + '\r\n';
 }
@@ -213,7 +233,7 @@ function renderCushion(root, ev) {
   const google = `<a class="cs-btn" data-act="google" href="${esc(googleUrl(ev))}" target="_blank" rel="noopener">
       ${ICON.cal}<span class="cs-btn-text"><b>Googleカレンダーに追加</b><small>Android・Googleカレンダーの方</small></span>${ICON.chev}</a>`;
   const apple = `<button class="cs-btn" data-act="ics" type="button">
-      ${ICON.bell}<span class="cs-btn-text"><b>iPhoneのカレンダーに追加</b><small>Mac・Outlook対応／3日前と前日に通知</small></span>${ICON.chev}</button>`;
+      ${ICON.bell}<span class="cs-btn-text"><b>iPhoneのカレンダーに追加</b><small>Mac・Outlook対応${alertSummary(ev) ? '／' + alertSummary(ev) : ''}</small></span>${ICON.chev}</button>`;
   const btns = (isAppleDevice() ? [apple, google] : [google, apple]);
   btns[0] = btns[0].replace('class="cs-btn"', 'class="cs-btn primary"');
 
@@ -223,7 +243,8 @@ function renderCushion(root, ev) {
     <div class="cs-top">
     <img class="cs-hero${bannerSrc ? ' custom' : ''}" src="${esc(bannerSrc || HERO_SRC)}" alt="" width="1000" height="672"
          onerror="this.onerror=null;this.className='cs-hero';this.src='${esc(HERO_SRC)}'">
-    <div class="cs-leaf">
+    <div class="cs-fade" aria-hidden="true"></div>
+      <div class="cs-leaf">
       <div class="cs-leaf-body">
         <div class="cs-leaf-head"><span>${s[0]}年 ${s[1]}月</span><span>${MONTH_EN[s[1] - 1]}</span></div>
         <div class="cs-day${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">${s[2]}</div>
@@ -241,9 +262,11 @@ function renderCushion(root, ev) {
     ${ev.loc ? `<div class="cs-place">${ICON.pin}<span>${esc(ev.loc)}</span></div>` : ''}
 
     <div class="cs-lead">${ev.nf ? '予定を、カレンダーに入れておく' : 'まずは、予定だけ押さえる'}</div>
+    <p class="cs-reassure">ボタンを押すと、カレンダーの<span class="cs-nw"><b>「予定の登録画面」</b>が開きます。</span><br><b><span class="cs-nw">押しただけで、予定がすぐに入ることは</span><span class="cs-nw">ありません。</span></b></p>
     <div class="cs-btns">${btns.join('')}</div>
-    <p class="cs-flash" data-flash hidden>ファイルを開き、「追加」を押すと登録されます。</p>
+    <p class="cs-flash" data-flash hidden>カレンダーの画面が開きます。内容を確認して「追加」を押してください。まだ登録されていません。</p>
 
+    <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する</li><li>「保存」（iPhoneは「追加」）を押して完了</li></ol></div>
     <p class="cs-help">うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
     ${ev.detail ? `<div class="cs-lead cs-lead-detail" data-detail>イベントの詳細</div>
     <div class="cs-detail">${esc(ev.detail)}</div>` : ''}

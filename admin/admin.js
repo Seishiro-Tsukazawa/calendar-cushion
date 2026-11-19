@@ -139,6 +139,7 @@
   let events = [];
   let maxEvents = 100;
   let qrSvg = '';
+  let alertSel = new Set(DEFAULT_ALERTS);
 
   const SEASONS = [['spring', '春'], ['summer', '夏'], ['autumn', '秋'], ['winter', '冬']];
   const THEMES = [['gather', '集まり'], ['meal', '食事・乾杯'], ['study', '学び・講座'], ['music', '音楽・ライブ'], ['outdoor', 'お出かけ'], ['festival', 'お祭り'], ['family', 'ファミリー'], ['online', 'オンライン']];
@@ -166,7 +167,7 @@
   }
 
   function getEv() {
-    const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim(), nf: !$('fReq').checked, detail: fields.detail.value.replace(/\r\n?/g, '\n').trim() };
+    const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim(), nf: !$('fReq').checked, alerts: ALERTS.filter(a => alertSel.has(a.id)).map(a => a.id), detail: fields.detail.value.replace(/\r\n?/g, '\n').trim() };
     const txt = memoEl.value.replace(/\r\n?/g, '\n').trim();
     const tpl = MEMO_TEMPLATES.find(t => t.text === txt && !!t.nf === ev.nf);
     if (!txt || tpl) { ev.memo = ''; ev.memoT = tpl ? tpl.id : ''; }
@@ -177,6 +178,7 @@
   function fillForm(ev) {
     Object.keys(fields).forEach(k => fields[k].value = ev[k] || '');
     $('fReq').checked = !ev.nf;
+    alertSel = new Set(Array.isArray(ev.alerts) ? ev.alerts : DEFAULT_ALERTS);
     memoEl.value = memoText(ev);
     autoBanner = !ev.banner || /^img\/(spring|summer|autumn)-gather\.jpg$/.test(ev.banner);
     userSeason = false;
@@ -214,6 +216,7 @@
     $('bnThumb').onerror = function () { this.onerror = null; this.src = HERO_SRC; };
     $('urlField').hidden = ev.nf;
     $('memoTpl').innerHTML = MEMO_TEMPLATES.filter(t => !!t.nf === ev.nf).map(t => `<button type="button" class="ad-chip${ev.memoT === t.id ? ' on' : ''}" data-id="${t.id}">${t.label}</button>`).join('');
+    $('alertBox').innerHTML = ALERTS.map(a => `<button type="button" class="ad-chip${alertSel.has(a.id) ? ' on' : ''}" data-id="${a.id}" aria-pressed="${alertSel.has(a.id)}">${a.name}</button>`).join('');
     $('memoWarn').hidden = !/記入してください|○/.test(memoEl.value);
     $('dateWarn').hidden = !(ev.start && ev.end && ev.end < ev.start);
     renderCushion($('phoneScreen'), ev);
@@ -313,6 +316,11 @@
       const b = e.target.closest('.ad-chip'); if (!b) return;
       const t = MEMO_TEMPLATES.find(x => x.id === b.dataset.id);
       if (t) { memoEl.value = t.text; update(); }
+    });
+    $('alertBox').addEventListener('click', e => {
+      const b = e.target.closest('.ad-chip'); if (!b) return;
+      if (alertSel.has(b.dataset.id)) alertSel.delete(b.dataset.id); else alertSel.add(b.dataset.id);
+      update();
     });
     $('bnSeasons').addEventListener('click', e => {
       const b = e.target.closest('.ad-tab'); if (!b) return;
