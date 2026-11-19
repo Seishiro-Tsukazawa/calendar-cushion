@@ -92,6 +92,9 @@ body { margin: 0; background: #f4f1ea; }
 .ad-banner-thumb { flex: none; width: 132px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
 .ad-banner-ctl { flex: 1; min-width: 0; }
 .ad-banner-ctl .ad-actions { margin: 0 0 8px; }
+.ad-tabs { display: flex; gap: 6px; margin-top: 12px; }
+.ad-tab { flex: 1; font: inherit; font-weight: 700; font-size: 14px; padding: 7px 0; border-radius: 99px; border: 1.5px solid var(--line); background: var(--card); color: var(--sub); cursor: pointer; }
+.ad-tab.on { background: var(--ink); border-color: var(--ink); color: var(--card); }
 .ad-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
 .ad-preset { padding: 0; border: 2px solid transparent; border-radius: 12px; background: var(--card); cursor: pointer; font: inherit; color: var(--ink); text-align: center; overflow: hidden; outline: 1px solid var(--line); outline-offset: -1px; transition: transform .12s; }
 .ad-preset:active { transform: scale(.97); }
@@ -196,7 +199,8 @@ body { margin: 0; background: #f4f1ea; }
             </div>
           </div>
         </div>
-        <div id="bnPresets" class="ad-presets" style="margin-top:-4px;margin-bottom:16px"></div>
+        <div id="bnSeasons" class="ad-tabs" role="tablist" aria-label="季節"></div>
+        <div id="bnPresets" class="ad-presets" style="margin-bottom:16px"></div>
         <p id="bnStatus" class="ad-hint" hidden></p>
         <details id="cloudBox" style="margin:-4px 0 16px">
           <summary>画像の自動アップロード設定（Cloudinary）</summary>
@@ -559,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const local = upload && ev.banner === 'img/' + upload.name;
     const evView = Object.assign({}, ev, { _bannerSrc: local ? upload.url : '' });
     $('bnGuide').hidden = !local;
-    document.querySelectorAll('.ad-preset').forEach((el, i) => el.classList.toggle('on', ev.banner === PRESETS[i][0]));
+    markPresets();
     $('bnThumb').src = evView._bannerSrc || safeBanner(ev.banner) || 'img/hero.jpg';
     $('bnThumb').onerror = function () { this.onerror = null; this.src = 'img/hero.jpg'; };
     try {
@@ -595,6 +599,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const d = new Date(p[0], p[1] - 1, p[2], p[3] + 2, p[4]);
       fields.end.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
+    const ns = seasonOfDate(fields.start.value);
+    if (autoBanner) fields.banner.value = presetPath(ns, 'gather');
+    if (!userSeason && ns !== season) { season = ns; renderPresets(); }
     update();
   });
   Object.values(fields).concat(baseEl, $('fCloud'), $('fPreset')).forEach(el => el.addEventListener('input', update));
@@ -606,14 +613,32 @@ document.addEventListener('DOMContentLoaded', function () {
       return await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
     }
   }
-  const PRESETS = [['', '冬の集まり', 'img/hero-s.jpg'], ['img/preset-meal.jpg', '食事・乾杯', 'img/preset-meal-s.jpg'], ['img/preset-study.jpg', '学び・講座', 'img/preset-study-s.jpg'],
-    ['img/preset-music.jpg', '音楽・ライブ', 'img/preset-music-s.jpg'], ['img/preset-outdoor.jpg', 'お出かけ', 'img/preset-outdoor-s.jpg'], ['img/preset-festival.jpg', 'お祭り', 'img/preset-festival-s.jpg'],
-    ['img/preset-family.jpg', 'ファミリー', 'img/preset-family-s.jpg'], ['img/preset-online.jpg', 'オンライン', 'img/preset-online-s.jpg']];
-  $('bnPresets').innerHTML = PRESETS.map((p, i) => `<button type="button" class="ad-preset" data-i="${i}" aria-label="${p[1]}"><img src="${p[2]}" alt="" loading="lazy"><span>${p[1]}</span></button>`).join('');
+  const SEASONS = [['spring', '春'], ['summer', '夏'], ['autumn', '秋'], ['winter', '冬']];
+  const THEMES = [['gather', '集まり'], ['meal', '食事・乾杯'], ['study', '学び・講座'], ['music', '音楽・ライブ'], ['outdoor', 'お出かけ'], ['festival', 'お祭り'], ['family', 'ファミリー'], ['online', 'オンライン']];
+  const presetPath = (s, t) => s === 'winter' ? (t === 'gather' ? '' : `img/preset-${t}.jpg`) : `img/${s}-${t}.jpg`;
+  const presetThumb = (s, t) => s === 'winter' ? (t === 'gather' ? 'img/hero-s.jpg' : `img/preset-${t}-s.jpg`) : `img/${s}-${t}-s.jpg`;
+  const seasonOfDate = v => { const p = parseLocal(v); if (!p) return 'winter'; const m = p[1]; return m >= 3 && m <= 5 ? 'spring' : m <= 8 && m >= 6 ? 'summer' : m <= 11 && m >= 9 ? 'autumn' : 'winter'; };
+  let autoBanner = !fields.banner.value || /^img\/(spring|summer|autumn)-gather\.jpg$/.test(fields.banner.value);
+  let userSeason = false;
+  let season = (() => { const v = fields.banner.value; for (const [s] of SEASONS) for (const [t] of THEMES) if (presetPath(s, t) === v && v) return s; return seasonOfDate(fields.start.value); })();
+  function renderPresets() {
+    $('bnSeasons').innerHTML = SEASONS.map(([s, l]) => `<button type="button" role="tab" class="ad-tab${s === season ? ' on' : ''}" data-s="${s}" aria-selected="${s === season}">${l}</button>`).join('');
+    $('bnPresets').innerHTML = THEMES.map(([t, l]) => `<button type="button" class="ad-preset" data-path="${presetPath(season, t)}" aria-label="${l}"><img src="${presetThumb(season, t)}" alt="" loading="lazy"><span>${l}</span></button>`).join('');
+    markPresets();
+  }
+  function markPresets() {
+    const v = fields.banner.value.trim();
+    document.querySelectorAll('.ad-preset').forEach(el => el.classList.toggle('on', el.dataset.path === v));
+  }
+  $('bnSeasons').addEventListener('click', e => {
+    const b = e.target.closest('.ad-tab'); if (!b) return;
+    season = b.dataset.s; userSeason = true; renderPresets();
+  });
   $('bnPresets').addEventListener('click', e => {
     const b = e.target.closest('.ad-preset'); if (!b) return;
-    upload = null; setStatus(''); fields.banner.value = PRESETS[b.dataset.i][0]; update();
+    autoBanner = false; upload = null; setStatus(''); fields.banner.value = b.dataset.path; update();
   });
+  renderPresets();
   function setStatus(msg, bad) { const el = $('bnStatus'); el.hidden = !msg; el.textContent = msg || ''; el.style.color = bad ? 'var(--red)' : ''; }
   async function uploadToCloud(blob, cloud, preset) {
     const fd = new FormData();
@@ -623,6 +648,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!r.ok || !j.secure_url) throw new Error((j.error && j.error.message) || '通信エラー');
     return j.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_1000/');
   }
+  fields.banner.addEventListener('input', () => { autoBanner = false; });
   $('bnPick').addEventListener('click', () => $('bnFile').click());
   $('bnFile').addEventListener('change', async e => {
     const f = e.target.files[0]; e.target.value = '';
@@ -636,6 +662,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (upload) URL.revokeObjectURL(upload.url);
       const name = 'banner-' + Date.now().toString(36) + '.jpg';
       upload = { name, blob, url: URL.createObjectURL(blob) };
+      autoBanner = false;
       fields.banner.value = 'img/' + name;
       update();
     } catch (err) { toast('この画像は読み込めませんでした'); return; }
@@ -651,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setStatus('自動アップロードに失敗しました（' + err.message + '）。下の手順で手動で置くこともできます。', true);
     }
   });
-  $('bnClear').addEventListener('click', () => { upload = null; setStatus(''); fields.banner.value = ''; update(); });
+  $('bnClear').addEventListener('click', () => { upload = null; autoBanner = true; setStatus(''); fields.banner.value = presetPath(seasonOfDate(fields.start.value), 'gather'); update(); });
   $('bnSave').addEventListener('click', () => {
     if (!upload) return;
     const a = document.createElement('a'); a.href = upload.url; a.download = upload.name; a.click();
