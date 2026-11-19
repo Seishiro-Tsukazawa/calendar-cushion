@@ -38,22 +38,29 @@ body { margin: 0; background: #f4f1ea; }
 .cs-title { font-family: var(--mincho); font-weight: 700; font-size: clamp(21px, 6.4vw, 25px); line-height: 1.55; margin: 38px 0 0; overflow-wrap: anywhere; word-break: auto-phrase; text-wrap: balance; }
 .cs-place { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; color: var(--sub); font-size: 14px; overflow-wrap: anywhere; }
 .cs-help { margin: 12px 0 0; font-size: 11.5px; color: var(--sub); line-height: 1.7; }
-.cs-top { position: relative; margin-top: 14px; border-radius: 22px; overflow: hidden; }
-.cs-top .cs-hero { margin: 0; aspect-ratio: 16 / 10; object-position: 30% 45%; }
+.cs-top { position: relative; margin-top: 14px; }
+.cs-top .cs-hero { margin: 0; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: 35% 45%; }
 .cs-top .cs-hero.custom { object-position: center; }
-/* 右側を、だんだんぼかして紙の色になじませ、その上にカレンダーを載せる */
-.cs-fade { position: absolute; top: 0; right: 0; bottom: 0; width: 48%; pointer-events: none; }
-.cs-fade::before, .cs-fade::after { content: ""; position: absolute; inset: 0; }
-.cs-fade::before { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 60%); mask-image: linear-gradient(to right, transparent 0%, #000 60%); }
-.cs-fade::after { background: linear-gradient(to right, rgba(244,241,234,0) 0%, rgba(244,241,234,.5) 55%, rgba(244,241,234,.78) 100%); }
-.cs-top .cs-leaf { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 112px; margin: 0; }
+/* カレンダーは、絵の右下の角にまたがって置く */
+.cs-top .cs-leaf { position: absolute; right: 14px; bottom: -84px; width: 112px; margin: 0; z-index: 3; filter: drop-shadow(0 6px 10px rgba(28,27,25,.18)); }
 .cs-top .cs-leaf-head { padding: 6px 8px 5px; justify-content: flex-end; }
 .cs-top .cs-leaf-head span:first-child { font-size: 12px; letter-spacing: .02em; white-space: nowrap; }
 .cs-top .cs-leaf-head span:last-child { display: none; }
 .cs-top .cs-day { font-size: 58px; padding: 8px 0 0; }
 .cs-top .cs-week { font-size: 13px; padding-bottom: 6px; letter-spacing: .3em; text-indent: .3em; }
+.cs-top .cs-week small { display: none; }
 .cs-top .cs-time { font-size: 13px; padding: 7px 4px; letter-spacing: .02em; }
-.cs-top .cs-seal { left: -14px; right: auto; top: -12px; width: 46px; height: 46px; font-size: 11px; box-shadow: inset 0 0 0 2px var(--card), inset 0 0 0 3px var(--red); }
+.cs-top .cs-seal { left: -16px; right: auto; top: -14px; width: 46px; height: 46px; font-size: 11px; box-shadow: inset 0 0 0 2px var(--card), inset 0 0 0 3px var(--red); }
+/* タイトルと場所は、カレンダーの左側に並べる */
+.cs-info { padding-right: 130px; min-height: 100px; margin-top: 18px; }
+.cs-info .cs-titlerow { margin-top: 0; }
+.cs-info .cs-title { font-size: clamp(18px, 5.6vw, 21px); }
+.cs-info .cs-place { margin-top: 8px; }
+@media (max-width: 350px) {
+  .cs-top .cs-leaf { width: 100px; right: 10px; }
+  .cs-top .cs-day { font-size: 50px; }
+  .cs-info { padding-right: 114px; }
+}
 .cs-titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 22px; }
 .cs-titlerow .cs-title { margin: 0; flex: 1 1 auto; }
 .cs-jump { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--red); background: transparent; border: 1.5px solid var(--red); border-radius: 99px; cursor: pointer; }
@@ -85,6 +92,13 @@ body { margin: 0; background: #f4f1ea; }
 .cs-steps { margin-top: 14px; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; line-height: 1.7; }
 .cs-steps b { display: block; font-size: 12px; letter-spacing: .06em; margin-bottom: 4px; }
 .cs-steps ol { margin: 0; padding-left: 1.5em; color: var(--sub); }
+.cs-support { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 12px; color: var(--sub); }
+.cs-support b { display: block; font-size: 12px; letter-spacing: .06em; color: var(--ink); margin-bottom: 2px; }
+.cs-other { margin-top: 14px; font-size: 12.5px; color: var(--sub); }
+.cs-other summary { cursor: pointer; font-weight: 700; color: var(--ink); padding: 8px 0; }
+.cs-other p { margin: 4px 0 10px; line-height: 1.8; }
+.cs-copy { font: inherit; font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 8px; border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); cursor: pointer; }
+.cs-copy:active { transform: translateY(1px); }
 .cs-flash { margin: 10px 0 0; padding: 10px 14px; background: var(--ink); color: var(--card); border-radius: 8px; font-size: 13px; }
 .cs-flash[hidden] { display: none; }
 

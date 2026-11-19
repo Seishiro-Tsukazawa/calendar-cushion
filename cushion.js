@@ -221,6 +221,17 @@ const ICON = {
   arrow: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 };
 
+// カレンダーを使えない人向けに、コピーして貼れる形の文章を作る
+function shareText(ev) {
+  const s = parseLocal(ev.start), w = weekday(s);
+  const lines = [ev.title, `日時：${s[0]}年${s[1]}月${s[2]}日（${WEEK_JA[w]}）${timeRange(ev)}`];
+  if (ev.loc) lines.push(`場所：${ev.loc}`);
+  if (ev.detail) lines.push('', ev.detail.trim());
+  const form = ev.nf ? '' : safeHttpUrl(ev.url);
+  if (form) lines.push('', `お申し込み：${form}`);
+  return lines.join('\n');
+}
+
 function renderCushion(root, ev) {
   if (!isValidEv(ev)) {
     root.innerHTML = `<div class="cs"><div class="cs-empty"><div>
@@ -243,8 +254,7 @@ function renderCushion(root, ev) {
     <div class="cs-top">
     <img class="cs-hero${bannerSrc ? ' custom' : ''}" src="${esc(bannerSrc || HERO_SRC)}" alt="" width="1000" height="672"
          onerror="this.onerror=null;this.className='cs-hero';this.src='${esc(HERO_SRC)}'">
-    <div class="cs-fade" aria-hidden="true"></div>
-      <div class="cs-leaf">
+    <div class="cs-leaf">
       <div class="cs-leaf-body">
         <div class="cs-leaf-head"><span>${s[0]}年 ${s[1]}月</span><span>${MONTH_EN[s[1] - 1]}</span></div>
         <div class="cs-day${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">${s[2]}</div>
@@ -255,19 +265,26 @@ function renderCushion(root, ev) {
     </div>
     </div>
 
+    <div class="cs-info">
     <div class="cs-titlerow">
       <h1 class="cs-title">${esc(ev.title)}</h1>
       ${ev.detail ? `<button class="cs-jump" type="button" data-jump>詳細を見る<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>` : ''}
     </div>
     ${ev.loc ? `<div class="cs-place">${ICON.pin}<span>${esc(ev.loc)}</span></div>` : ''}
+    </div>
 
     <div class="cs-lead">${ev.nf ? '予定を、カレンダーに入れておく' : 'まずは、予定だけ押さえる'}</div>
-    <p class="cs-reassure">ボタンを押すと、カレンダーの<span class="cs-nw"><b>「予定の登録画面」</b>が開きます。</span><br><b><span class="cs-nw">押しただけで、予定がすぐに入ることは</span><span class="cs-nw">ありません。</span></b></p>
+    <p class="cs-reassure"><span class="cs-nw">ボタンを押すと、</span><span class="cs-nw"><b>予定の登録画面</b>が開きます。</span><br><b><span class="cs-nw">押しただけで、</span><span class="cs-nw">予定がすぐに入ることはありません。</span></b></p>
     <div class="cs-btns">${btns.join('')}</div>
     <p class="cs-flash" data-flash hidden>カレンダーの画面が開きます。内容を確認して「追加」を押してください。まだ登録されていません。</p>
 
-    <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する</li><li>「保存」（iPhoneは「追加」）を押して完了</li></ol></div>
+    <div class="cs-steps"><b>登録のしかた</b><ol><li>上のボタンを押す</li><li>開いた画面で、日時や内容を確認する</li><li>「保存」（iPhoneは「追加」）を押して完了</li></ol>
+      <div class="cs-support"><b>使えるカレンダー</b><span class="cs-nw">Googleカレンダー</span>／<span class="cs-nw">iPhone・Macのカレンダー</span>／<span class="cs-nw">Outlook</span></div></div>
     <p class="cs-help">うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
+    <details class="cs-other"><summary>上のカレンダーを使っていない方へ</summary>
+      <p>このページのボタンは、上の3つのカレンダーでのみ使えます。LINEカレンダーなど、ほかのアプリをお使いの方は、下のボタンで日時などをコピーして、お使いのアプリに貼り付けてください。</p>
+      <button class="cs-copy" type="button" data-copy>日時・場所をコピーする</button>
+    </details>
     ${ev.detail ? `<div class="cs-lead cs-lead-detail" data-detail>イベントの詳細</div>
     <div class="cs-detail">${esc(ev.detail)}</div>` : ''}
 
@@ -278,6 +295,14 @@ function renderCushion(root, ev) {
     </div>`}
     ${ev.nf ? '' : '<p class="cs-foot">都合が悪くなった場合は、カレンダーの予定を削除するだけで大丈夫です。</p>'}
   </div></div>`;
+  const copyBtn = root.querySelector('[data-copy]');
+  if (copyBtn) copyBtn.addEventListener('click', async () => {
+    const text = shareText(ev);
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) {} ta.remove(); }
+    copyBtn.textContent = 'コピーしました';
+    setTimeout(() => { copyBtn.textContent = '日時・場所をコピーする'; }, 2200);
+  });
   const jump = root.querySelector('[data-jump]');
   if (jump) jump.addEventListener('click', () => root.querySelector('[data-detail]').scrollIntoView({ behavior: 'smooth', block: 'start' }));
   root.querySelector('[data-act="ics"]').addEventListener('click', () => {
