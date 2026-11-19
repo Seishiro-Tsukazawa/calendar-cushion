@@ -95,6 +95,10 @@ body { margin: 0; background: #f4f1ea; }
 .ad-banner-ctl .ad-actions { margin: 0 0 8px; }
 .ad-tabs { display: flex; gap: 6px; margin-top: 12px; }
 .ad-tab { flex: 1; font: inherit; font-weight: 700; font-size: 14px; padding: 7px 0; border-radius: 99px; border: 1.5px solid var(--line); background: var(--card); color: var(--sub); cursor: pointer; }
+.ad-check { display: flex !important; flex-direction: row !important; align-items: flex-start; gap: 10px; margin-bottom: 16px; cursor: pointer; }
+.ad-check input { width: auto !important; margin-top: 4px; flex: none; }
+.ad-check span { display: block; font-weight: 700; font-size: 13px; }
+.ad-check em { display: block; font-style: normal; font-weight: 400; color: var(--sub); font-size: 12px; }
 .ad-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .ad-chip { font: inherit; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--card); color: var(--sub); cursor: pointer; }
 .ad-chip.on { background: var(--ink); border-color: var(--ink); color: var(--card); }
@@ -128,7 +132,7 @@ body { margin: 0; background: #f4f1ea; }
 .ad-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .ad-hint { font-size: 12px; color: var(--sub); margin: -6px 0 0; }
 .ad-alert { font-size: 13px; padding: 10px 14px; border-left: 3px solid var(--red); background: rgba(200,64,47,.07); margin: 0 0 16px; }
-.ad-alert[hidden] { display: none; }
+.ad-alert[hidden], .ad-field[hidden] { display: none; }
 .ad-share { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 20px; align-items: start; }
 .ad-qr { width: 168px; aspect-ratio: 1; background: #fff; border: 1px solid var(--ink); border-radius: 6px; padding: 10px; display: grid; place-items: center; font-size: 12px; color: var(--red); text-align: center; }
 .ad-qr svg { width: 100%; height: 100%; display: block; }
@@ -188,7 +192,8 @@ body { margin: 0; background: #f4f1ea; }
         <p id="dateWarn" class="ad-alert" hidden>終了日時が開始日時より前になっています。</p>
         <label class="ad-field"><span>開催場所</span>
           <input id="fLoc" type="text" placeholder="渋谷コミュニティスペース 3F" autocomplete="off"></label>
-        <label class="ad-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
+        <label class="ad-check"><input id="fReq" type="checkbox" checked><span>本申し込みが必要<em>外すと「仮押さえ・未申込」の表記や申込案内が消えます</em></span></label>
+        <label id="urlField" class="ad-field"><span>本申し込みフォームのURL<em>Googleフォーム・Peatixなど</em></span>
           <input id="fUrl" type="url" placeholder="https://forms.gle/…" autocomplete="off"></label>
         <label class="ad-field"><span>イベントの詳細<em>ページとカレンダーの備考に入ります</em></span>
           <textarea id="fDetail" rows="4" placeholder="内容・参加費・持ち物・当日の流れなど" style="font-family:inherit;font-size:14px;line-height:1.7;color:inherit"></textarea></label>
@@ -270,6 +275,7 @@ body { margin: 0; background: #f4f1ea; }
             <tr><td><code>e</code></td><td>終了日時</td></tr>
             <tr><td><code>l</code></td><td>開催場所</td></tr>
             <tr><td><code>u</code></td><td>本申し込みフォームのURL</td></tr>
+            <tr><td><code>n</code></td><td><code>1</code> のとき、申し込み不要の予定になります</td></tr>
             <tr><td><code>d</code></td><td>イベントの詳細</td></tr>
             <tr><td><code>mt</code></td><td>備考のテンプレート名（省略時は標準）</td></tr>
             <tr><td><code>m</code></td><td>備考の本文（書き換えたとき。<code>mt</code>より優先）</td></tr>
@@ -327,7 +333,7 @@ function timeRange(ev) {
   return `${hm(s)} – ${e[1]}/${e[2]}(${WEEK_JA[weekday(e)]}) ${hm(e)}`;
 }
 
-function calTitle(ev) { return `【仮押さえ・未申込】${ev.title}`; }
+function calTitle(ev) { return ev.nf ? ev.title : `【仮押さえ・未申込】${ev.title}`; }
 const MEMO_TEMPLATES = [
   { id: 'tentative', label: '標準', text: '現在は【仮押さえ（未申込）】の状態です！\n参加できそうな方は、以下のリンクから本申し込みをお願いします👇\n{URL}\n\n{詳細}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
   { id: 'casual', label: 'やわらかめ', text: 'とりあえず予定だけ押さえておきました📌\n行けそうだったら、こちらから申し込んでね👇\n{URL}\n\n{詳細}\n\n予定が合わなくなったら、この予定は消してOKです！' },
@@ -335,10 +341,16 @@ const MEMO_TEMPLATES = [
   { id: 'deadline', label: '締切あり', text: '現在は【仮押さえ（未申込）】の状態です！\n申込締切：○月○日まで\n参加される方は、お早めにこちらからお申し込みください👇\n{URL}\n\n{詳細}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
   { id: 'fee', label: '参加費・持ち物', text: '現在は【仮押さえ（未申込）】の状態です！\n参加が決まったら、こちらから本申し込みをお願いします👇\n{URL}\n\n{詳細}\n\n■ 参加費：（記入してください）\n■ 持ち物：（記入してください）\n※都合が悪くなった場合は、この予定を削除してください。' },
   { id: 'online', label: 'オンライン', text: 'オンライン開催の予定です💻（仮押さえ・未申込）\n参加できる方は、こちらから本申し込みをお願いします👇\n{URL}\n\n{詳細}\n\n参加用のリンクは、お申し込みいただいた方にお送りします。\n※都合が悪くなった場合は、この予定を削除してください。' }
+  ,
+  { id: 'nf-simple', nf: 1, label: 'シンプル', text: '{詳細}\n\n※都合が悪くなった場合は、この予定を削除してください。' },
+  { id: 'nf-casual', nf: 1, label: 'やわらかめ', text: 'ぜひ遊びに来てください✨\n{詳細}\n\n行けなくなったら、この予定は消してOKです！' },
+  { id: 'nf-notice', nf: 1, label: 'お知らせ', text: '【お知らせ】下記の日程で開催します。\n{詳細}\n\nご不明な点は、主催者までお問い合わせください。' },
+  { id: 'nf-free', nf: 1, label: '参加自由', text: '申し込みは不要です。当日、直接お越しください。\n{詳細}\n\n※都合が悪くなった場合は、この予定を削除してください。' }
 ];
+function defaultTpl(nf) { return MEMO_TEMPLATES.find(x => !!x.nf === !!nf); }
 function memoText(ev) {
   if (ev.memo) return ev.memo;
-  const t = MEMO_TEMPLATES.find(x => x.id === ev.memoT) || MEMO_TEMPLATES[0];
+  const t = MEMO_TEMPLATES.find(x => x.id === ev.memoT && !!x.nf === !!ev.nf) || defaultTpl(ev.nf);
   return t.text;
 }
 function calDetails(ev) {
@@ -395,7 +407,7 @@ function buildIcs(ev) {
   const alarm = (days, label) => [
     'BEGIN:VALARM',
     'ACTION:DISPLAY',
-    'DESCRIPTION:' + icsEscape(`${label}：${ev.title}（まだ未申込です）`),
+    'DESCRIPTION:' + icsEscape(`${label}：${ev.title}${ev.nf ? '' : '（まだ未申込です）'}`),
     `TRIGGER;VALUE=DATE-TIME:${alarmUtc(ev.start, days)}`,
     'END:VALARM'
   ];
@@ -421,7 +433,7 @@ function buildIcs(ev) {
     `DTEND;TZID=${TZ}:${compact(end)}`,
     'SUMMARY:' + icsEscape(calTitle(ev)),
     'DESCRIPTION:' + icsEscape(calDetails(ev)),
-    'STATUS:TENTATIVE'
+    ev.nf ? 'STATUS:CONFIRMED' : 'STATUS:TENTATIVE'
   ];
   if (ev.loc) lines.push('LOCATION:' + icsEscape(ev.loc));
   if (ev.url) lines.push('URL:' + ev.url);
@@ -442,7 +454,7 @@ function downloadIcs(ev) {
 
 function evFromParams(search) {
   const q = new URLSearchParams(search);
-  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '', detail: q.get('d') || '', memo: q.get('m') || '', memoT: q.get('mt') || '' };
+  return { title: q.get('t') || '', start: q.get('s') || '', end: q.get('e') || '', loc: q.get('l') || '', url: q.get('u') || '', banner: q.get('b') || '', detail: q.get('d') || '', memo: q.get('m') || '', memoT: q.get('mt') || '', nf: q.get('n') === '1' };
 }
 function paramsFromEv(ev) {
   const q = new URLSearchParams();
@@ -452,9 +464,10 @@ function paramsFromEv(ev) {
   if (ev.loc) q.set('l', ev.loc);
   if (ev.url) q.set('u', ev.url);
   if (ev.banner) q.set('b', ev.banner);
+  if (ev.nf) q.set('n', '1');
   if (ev.detail) q.set('d', ev.detail);
   if (ev.memo) q.set('m', ev.memo);
-  else if (ev.memoT && ev.memoT !== MEMO_TEMPLATES[0].id) q.set('mt', ev.memoT);
+  else if (ev.memoT && ev.memoT !== defaultTpl(ev.nf).id) q.set('mt', ev.memoT);
   return q.toString();
 }
 function isValidEv(ev) { return !!(ev.title && parseLocal(ev.start)); }
@@ -507,7 +520,7 @@ function renderCushion(root, ev) {
         <div class="cs-week">${WEEK_JA[w]}曜日<small>${WEEK_EN[w]}</small></div>
         <div class="cs-time">${esc(timeRange(ev))}</div>
       </div>
-      <div class="cs-seal" aria-hidden="true"><span>仮押<br>さえ</span></div>
+      <div class="cs-seal" aria-hidden="true">${ev.nf ? '<span>予定</span>' : '<span>仮押<br>さえ</span>'}</div>
     </div>
 
     <h1 class="cs-title">${esc(ev.title)}</h1>
@@ -515,16 +528,16 @@ function renderCushion(root, ev) {
 
     ${ev.detail ? `<div class="cs-detail">${esc(ev.detail)}</div>` : ''}
 
-    <div class="cs-lead">まずは、予定だけ押さえる</div>
+    <div class="cs-lead">${ev.nf ? '予定を、カレンダーに入れておく' : 'まずは、予定だけ押さえる'}</div>
     <div class="cs-btns">${btns.join('')}</div>
     <p class="cs-flash" data-flash hidden>ファイルを開き、「追加」を押すと登録されます。</p>
 
-    <div class="cs-note">
+    ${ev.nf ? '' : `<div class="cs-note">
       <b>お申し込みは、まだ完了していません。</b>
       参加できそうな方は、あとから本申し込みをお願いします。
       ${formUrl ? `<br><a href="${esc(formUrl)}" target="_blank" rel="noopener">本申し込みフォームへ ${ICON.arrow}</a>` : ''}
-    </div>
-    <p class="cs-foot">都合が悪くなった場合は、カレンダーの予定を削除するだけで大丈夫です。うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
+    </div>`}
+    <p class="cs-foot">${ev.nf ? '' : '都合が悪くなった場合は、カレンダーの予定を削除するだけで大丈夫です。'}うまく追加できないときは、Safari または Chrome でこのページを開いてください。</p>
   </div></div>`;
   root.querySelector('[data-act="ics"]').addEventListener('click', () => {
     downloadIcs(ev);
@@ -572,7 +585,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const init = Object.assign({}, defaults, saved);
   Object.keys(fields).forEach(k => fields[k].value = init[k] || '');
   const memoEl = $('fMemo');
-  memoEl.value = init.memoText || memoText({ memoT: init.memoT });
+  $('fReq').checked = !init.nf;
+  memoEl.value = init.memoText || memoText({ memoT: init.memoT, nf: init.nf });
   $('fCloud').value = (init.cloud && init.cloud.cloud) || defaults.cloud.cloud;
   $('fPreset').value = (init.cloud && init.cloud.preset) || defaults.cloud.preset;
   $('cloudBox').open = !($('fCloud').value && $('fPreset').value);
@@ -582,9 +596,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let upload = null; // { name, blob, url }
   const getEv = () => {
-    const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim(), detail: fields.detail.value.replace(/\r\n?/g, '\n').trim() };
+    const ev = { title: fields.title.value.trim(), start: fields.start.value, end: fields.end.value, loc: fields.loc.value.trim(), url: fields.url.value.trim(), banner: fields.banner.value.trim(), nf: !$('fReq').checked, detail: fields.detail.value.replace(/\r\n?/g, '\n').trim() };
     const txt = memoEl.value.replace(/\r\n?/g, '\n').trim();
-    const tpl = MEMO_TEMPLATES.find(t => t.text === txt);
+    const tpl = MEMO_TEMPLATES.find(t => t.text === txt && !!t.nf === ev.nf);
     if (!txt || tpl) { ev.memo = ''; ev.memoT = tpl ? tpl.id : ''; }
     else { ev.memo = txt; ev.memoT = ''; }
     return ev;
@@ -621,7 +635,8 @@ document.addEventListener('DOMContentLoaded', function () {
       $('bnGh').href = gh || '#'; $('bnGh').style.display = gh ? '' : 'none';
     } catch (e) {}
 
-    $('memoTpl').innerHTML = MEMO_TEMPLATES.map(t => `<button type="button" class="ad-chip${ev.memoT === t.id ? ' on' : ''}" data-id="${t.id}">${t.label}</button>`).join('');
+    $('urlField').hidden = ev.nf;
+    $('memoTpl').innerHTML = MEMO_TEMPLATES.filter(t => !!t.nf === ev.nf).map(t => `<button type="button" class="ad-chip${ev.memoT === t.id ? ' on' : ''}" data-id="${t.id}">${t.label}</button>`).join('');
     $('memoWarn').hidden = !/記入してください|○/.test(memoEl.value);
     $('dateWarn').hidden = !(ev.start && ev.end && ev.end < ev.start);
     $('baseWarn').hidden = !!baseEl.value.trim() || isHttp;
@@ -655,6 +670,11 @@ document.addEventListener('DOMContentLoaded', function () {
     update();
   });
   Object.values(fields).concat(baseEl, $('fCloud'), $('fPreset'), memoEl).forEach(el => el.addEventListener('input', update));
+  $('fReq').addEventListener('change', () => {
+    const nf = !$('fReq').checked, cur = memoEl.value.replace(/\r\n?/g, '\n').trim();
+    if (!cur || MEMO_TEMPLATES.some(t => t.text === cur && !!t.nf !== nf)) memoEl.value = defaultTpl(nf).text;
+    update();
+  });
   $('memoTpl').addEventListener('click', e => {
     const b = e.target.closest('.ad-chip'); if (!b) return;
     const t = MEMO_TEMPLATES.find(x => x.id === b.dataset.id);
